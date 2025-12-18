@@ -1,6 +1,13 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from database import tests_col, centers_col, prices_col, bookings_col
+from database import (
+    tests_col,
+    centers_col,
+    prices_col,
+    bookings_col,
+    admins_col,
+    center_users_col
+)
 import time
 
 app = FastAPI()
