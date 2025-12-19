@@ -178,28 +178,36 @@ def center_login(data: dict):
         "center_id": user["center_id"],
         "center_name": center["center_name"] if center else ""
     }
-# ================= CENTER BOOKINGS =================
+
 @app.get("/center/bookings")
 def center_bookings(center_id: int):
+    query = {
+        "$or": [
+            {"center_id": center_id},
+            {"center_id": str(center_id)}
+        ]
+    }
+
     bookings = list(bookings_col.find(
-        {"center_id": center_id},
-        {"_id": 0, "mobile": 0}   # ❌ hide mobile
+        query,
+        {"_id": 0, "mobile": 0}
     ))
 
     result = []
     for b in bookings:
-        test = tests_col.find_one({"id": b["test_id"]}, {"_id": 0})
+        test = tests_col.find_one({"id": b.get("test_id")}, {"_id": 0})
 
         result.append({
-            "booking_id": b["booking_id"],
-            "patient_name": b["patient_name"],
+            "booking_id": b.get("booking_id"),
+            "patient_name": b.get("patient_name"),
             "test_name": test["test_name"] if test else "",
-            "price": b["price"],
-            "status": b["status"],
-            "created_at": b["created_at"]
+            "price": b.get("price"),
+            "status": b.get("status"),
+            "created_at": b.get("created_at")
         })
 
     return result
+
 # ================= MARK BOOKING DONE =================
 @app.post("/center/mark_done")
 def mark_done(data: dict):
