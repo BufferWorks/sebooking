@@ -48,7 +48,6 @@ def get_centers(test_id: int):
         )
     )
 
-
     result = []
     for p in prices:
         center = centers_col.find_one(
@@ -64,6 +63,7 @@ def get_centers(test_id: int):
             })
 
     return result
+
 
 # ---------------- ADD BOOKING ----------------
 @app.post("/add_booking")
