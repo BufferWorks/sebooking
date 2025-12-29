@@ -319,3 +319,11 @@ def update_center_user(data: dict):
         raise HTTPException(status_code=404, detail="Center user not found")
 
     return {"status": "center user updated"}
+
+@app.post("/admin/update_test")
+def update_test(data: dict):
+    result = tests_col.update_one(
+        {"id": int(data["test_id"])},
+        {"$set": {"test_name": data["test_name"]}}
+    )
+    return {"status": "updated"}
