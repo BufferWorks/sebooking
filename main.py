@@ -49,20 +49,26 @@ def get_centers(test_id: int):
     )
 
     result = []
+
     for p in prices:
         center = centers_col.find_one(
             {"id": p["center_id"], "enabled": True},
-            {"_id": 0, "id": 1, "center_name": 1, "address": 1}
+            {"_id": 0}
         )
+
         if center:
             result.append({
                 "center_id": center["id"],
                 "center_name": center["center_name"],
                 "address": center["address"],
-                "price": p["price"]
+                "lat": center.get("lat"),
+                "lng": center.get("lng"),
+                "price": p["price"],
+                "enabled": True  # ✅ SEND THIS
             })
 
     return result
+
 
 
 # ---------------- ADD BOOKING ----------------
