@@ -7,7 +7,10 @@ from database import (
     bookings_col,
     admins_col,
     center_users_col,
-    categories_col
+    admins_col,
+    center_users_col,
+    categories_col,
+    notices_col
 )
 
 import time
@@ -26,6 +29,29 @@ app.add_middleware(
 @app.get("/")
 def home():
     return {"status": "SE Booking API running"}
+
+# ---------------- GET NOTICE ----------------
+@app.get("/get_notice")
+def get_notice():
+    notice = notices_col.find_one({"id": "home_notice"}, {"_id": 0})
+    if not notice:
+        return {"text": "", "enabled": False}
+    return notice
+
+# ---------------- UPDATE NOTICE ----------------
+@app.post("/admin/update_notice")
+def update_notice(data: dict):
+    notices_col.update_one(
+        {"id": "home_notice"},
+        {
+            "$set": {
+                "text": data.get("text", ""),
+                "enabled": bool(data.get("enabled", False))
+            }
+        },
+        upsert=True
+    )
+    return {"status": "updated"}
 
 # ---------------- GET TESTS ----------------
 @app.get("/get_tests")
