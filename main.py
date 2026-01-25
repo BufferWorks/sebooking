@@ -89,6 +89,7 @@ def get_centers(test_id: int):
                 "address": center["address"],
                 "lat": center.get("lat"),
                 "lng": center.get("lng"),
+                "timings": center.get("timings", []),
                 "price": p["price"],
                 "enabled": True  # ✅ SEND THIS
             })
@@ -188,6 +189,7 @@ def add_center(data: dict):
         "address": data["address"],
         "lat": data.get("lat"),
         "lng": data.get("lng"),
+        "timings": data.get("timings", []),
         "enabled": True
     })
 
@@ -354,6 +356,9 @@ def update_center(data: dict):
 
     if "lng" in data and data["lng"] is not None:
         update_data["lng"] = float(data["lng"])
+
+    if "timings" in data:
+        update_data["timings"] = data["timings"]
 
     result = centers_col.update_one(
         {"id": int(data["id"])},
