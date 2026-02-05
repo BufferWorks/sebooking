@@ -18,4 +18,5 @@ bookings_col = db["bookings"]
 admins_col = db["admins"]
 center_users_col = db["center_users"]
 categories_col = db["categories"]
-notices_col = db["notices"]  # ✅ ADD THIS
+notices_col = db["notices"]
+agents_col = db["agents"]  # ✅ ADD THIS

@@ -10,7 +10,8 @@ from database import (
     admins_col,
     center_users_col,
     categories_col,
-    notices_col
+    notices_col,
+    agents_col
 )
 
 import time
@@ -111,7 +112,9 @@ def add_booking(data: dict):
         "test_id": data["test_id"],
         "price": data["price"],
         "status": "Pending",
-        "created_at": int(time.time())
+        "created_at": int(time.time()),
+        "booked_by": data.get("booked_by", "Customer"),
+        "payment_status": data.get("payment_status", "Unpaid")
     }
 
     bookings_col.insert_one(booking)
@@ -255,7 +258,9 @@ def center_bookings(center_id: int):
             "test_name": test["test_name"] if test else "",
             "price": b.get("price"),
             "status": b.get("status"),
-            "created_at": b.get("created_at")
+            "created_at": b.get("created_at"),
+            "booked_by": b.get("booked_by", "Customer"),
+            "payment_status": b.get("payment_status", "Unpaid")
         })
 
     return result
@@ -423,7 +428,59 @@ def admin_all_bookings():
             "test_name": test["test_name"] if test else "",
             "center_name": center["center_name"] if center else "",
             "status": b["status"],
-            "created_at": b["created_at"]
+            "created_at": b["created_at"],
+            "booked_by": b.get("booked_by", "Customer"),
+            "payment_status": b.get("payment_status", "Unpaid")
         })
 
     return result
+
+
+# ================= AGENT SECTION =================
+
+@app.post("/agent/login")
+def agent_login(data: dict):
+    agent = agents_col.find_one({
+        "username": data.get("username"),
+        "password": data.get("password")
+    })
+
+    if not agent:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    return {
+        "agent_id": str(agent["_id"]),
+        "agent_name": agent["name"]
+    }
+
+@app.get("/admin/agents")
+def get_agents():
+    # Convert ObjectId to str for JSON serialization if needed, 
+    # but here we just return list. _id needs care.
+    agents = list(agents_col.find({}, {"_id": 0, "password": 0})) 
+    # If we want to return IDs we might need to cast _id. 
+    # For now let's rely on 'username' as unique or add a custom id.
+    return agents
+
+@app.post("/admin/add_agent")
+def add_agent(data: dict):
+    if agents_col.find_one({"username": data["username"]}):
+        raise HTTPException(status_code=400, detail="Agent exists")
+
+    agents_col.insert_one({
+        "name": data["name"],
+        "username": data["username"],
+        "password": data["password"],
+        "created_at": int(time.time())
+    })
+    return {"status": "agent added"}
+
+@app.post("/center/update_payment_status")
+def update_payment(data: dict):
+    result = bookings_col.update_one(
+        {"booking_id": data.get("booking_id")},
+        {"$set": {"payment_status": data.get("payment_status")}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    return {"status": "updated"}
