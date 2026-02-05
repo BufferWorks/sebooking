@@ -69,96 +69,116 @@ class _AgentHomeScreenState extends State<AgentHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Agent: $agentName'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _logout,
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Agent: $agentName'),
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: "Book Test"),
+              Tab(text: "My History"),
+            ],
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            indicatorColor: Colors.white,
           ),
-        ],
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: _logout,
+            ),
+          ],
+        ),
+        body: loading
+            ? const Center(child: CircularProgressIndicator())
+            : TabBarView(
+                children: [
+                  _buildBookTab(),
+                  AgentHistoryTab(agentName: agentName),
+                ],
+              ),
       ),
-      body: loading
-          ? const Center(child: CircularProgressIndicator())
-          : errorMessage != null
-              ? Center(child: Text(errorMessage!))
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Book Test for Patient',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: nameController,
-                        decoration:
-                            const InputDecoration(labelText: 'Patient Name'),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: mobileController,
-                        keyboardType: TextInputType.phone,
-                        decoration:
-                            const InputDecoration(labelText: 'Mobile Number'),
-                      ),
-                      const SizedBox(height: 16),
-                      const Text('Payment Status for Booking:', style: TextStyle(fontWeight: FontWeight.bold)),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: RadioListTile(
-                              title: const Text('Unpaid'),
-                              value: 'Unpaid',
-                              groupValue: _paymentStatus,
-                              onChanged: (val) => setState(() => _paymentStatus = val.toString()),
-                              dense: true,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ),
-                          Expanded(
-                            child: RadioListTile(
-                              title: const Text('Paid'),
-                              value: 'Paid',
-                              groupValue: _paymentStatus,
-                              onChanged: (val) => setState(() => _paymentStatus = val.toString()),
-                              dense: true,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'Select Category',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 16),
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: categories.length,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 1.2,
-                        ),
-                        itemBuilder: (_, i) {
-                          final cat = categories[i];
-                          return _categoryCard(cat);
-                        },
-                      ),
-                    ],
-                  ),
-                ),
     );
+  }
+
+  Widget _buildBookTab() {
+    return errorMessage != null
+        ? Center(child: Text(errorMessage!))
+        : SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Book Test for Patient',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Patient Name'),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: mobileController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(labelText: 'Mobile Number'),
+                ),
+                const SizedBox(height: 16),
+                const Text('Payment Status for Booking:',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                Row(
+                  children: [
+                    Expanded(
+                      child: RadioListTile(
+                        title: const Text('Unpaid'),
+                        value: 'Unpaid',
+                        groupValue: _paymentStatus,
+                        onChanged: (val) =>
+                            setState(() => _paymentStatus = val.toString()),
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    Expanded(
+                      child: RadioListTile(
+                        title: const Text('Paid'),
+                        value: 'Paid',
+                        groupValue: _paymentStatus,
+                        onChanged: (val) =>
+                            setState(() => _paymentStatus = val.toString()),
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Select Category',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 16),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: categories.length,
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1.2,
+                  ),
+                  itemBuilder: (_, i) {
+                    final cat = categories[i];
+                    return _categoryCard(cat);
+                  },
+                ),
+              ],
+            ),
+          );
   }
 
   Widget _categoryCard(Map category) {
@@ -174,8 +194,7 @@ class _AgentHomeScreenState extends State<AgentHomeScreen> {
           return;
         }
 
-        // Don't clear fields immediately for agent convenience? Or maybe clear.
-        // Let's clear to avoid booking for wrong person next.
+        // Clear for next use
         nameController.clear();
         mobileController.clear();
 
@@ -211,6 +230,117 @@ class _AgentHomeScreenState extends State<AgentHomeScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ---------------- AGENT HISTORY TAB ---------------- //
+class AgentHistoryTab extends StatefulWidget {
+  final String agentName;
+  const AgentHistoryTab({super.key, required this.agentName});
+
+  @override
+  State<AgentHistoryTab> createState() => _AgentHistoryTabState();
+}
+
+class _AgentHistoryTabState extends State<AgentHistoryTab> {
+  List bookings = [];
+  List filteredBookings = [];
+  bool loading = true;
+  String dateFilter = 'today';
+
+  @override
+  void initState() {
+    super.initState();
+    loadHistory();
+  }
+
+  Future<void> loadHistory() async {
+    setState(() => loading = true);
+    final res = await http.get(
+      Uri.parse('${Config.baseUrl}/agent/bookings?agent_name=${widget.agentName}'),
+    );
+
+    if (res.statusCode == 200) {
+      bookings = jsonDecode(res.body);
+    } else {
+      bookings = [];
+    }
+    applyFilter();
+    setState(() => loading = false);
+  }
+
+  void applyFilter() {
+    final now = DateTime.now();
+    filteredBookings = bookings.where((b) {
+      final date = DateTime.fromMillisecondsSinceEpoch(b['created_at'] * 1000);
+      if (dateFilter == 'today') {
+        return date.year == now.year && date.month == now.month && date.day == now.day;
+      }
+      return true;
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              const Text("Filter: ", style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                label: const Text('Today'),
+                selected: dateFilter == 'today',
+                onSelected: (sel) {
+                   if (sel) setState(() { dateFilter = 'today'; applyFilter(); });
+                },
+              ),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                label: const Text('All'),
+                selected: dateFilter == 'all',
+                onSelected: (sel) {
+                   if (sel) setState(() { dateFilter = 'all'; applyFilter(); });
+                },
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: loading 
+            ? const Center(child: CircularProgressIndicator()) 
+            : filteredBookings.isEmpty 
+              ? const Center(child: Text("No bookings found")) 
+              : ListView.builder(
+              itemCount: filteredBookings.length,
+              itemBuilder: (ctx, i) {
+                final b = filteredBookings[i];
+                return Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: ListTile(
+                    title: Text(b['patient_name']),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("${b['test_name']} @ ${b['center_name']}"),
+                         Text("Status: ${b['status']} | Payment: ${b['payment_status']}", 
+                          style: TextStyle(
+                            color: b['payment_status'] == 'Paid' ? Colors.green : Colors.red,
+                            fontSize: 12
+                          ),
+                        ),
+                      ],
+                    ),
+                    trailing: Text("₹${b['price']}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                );
+              },
+            ),
+        )
+      ],
     );
   }
 }

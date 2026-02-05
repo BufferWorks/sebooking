@@ -250,10 +250,11 @@ def center_bookings(center_id: int):
         ]
     }
 
+    # Sort DESC
     bookings = list(bookings_col.find(
         query,
         {"_id": 0, "mobile": 0}
-    ))
+    ).sort("created_at", -1))
 
     result = []
     for b in bookings:
@@ -267,7 +268,36 @@ def center_bookings(center_id: int):
             "status": b.get("status"),
             "created_at": b.get("created_at"),
             "booked_by": b.get("booked_by", "Customer"),
-            "payment_status": b.get("payment_status", "Unpaid")
+            "payment_status": b.get("payment_status", "Unpaid"),
+            "payment_updated_by": b.get("payment_updated_by")
+        })
+
+    return result
+
+@app.get("/agent/bookings")
+def agent_bookings(agent_name: str):
+    # Sort DESC
+    bookings = list(bookings_col.find(
+        {"booked_by": agent_name},
+        {"_id": 0}
+    ).sort("created_at", -1))
+
+    result = []
+    for b in bookings:
+        test = tests_col.find_one({"id": b.get("test_id")}, {"_id": 0})
+        center = centers_col.find_one({"id": b.get("center_id")}, {"_id": 0})
+
+        result.append({
+            "booking_id": b.get("booking_id"),
+            "patient_name": b.get("patient_name"),
+            "mobile": b.get("mobile"),
+            "test_name": test["test_name"] if test else "",
+            "center_name": center["center_name"] if center else "",
+            "price": b.get("price"),
+            "status": b.get("status"),
+            "created_at": b.get("created_at"),
+            "payment_status": b.get("payment_status", "Unpaid"),
+            "payment_updated_by": b.get("payment_updated_by")
         })
 
     return result
@@ -511,6 +541,7 @@ def get_agents():
     for a in agents:
         a["id"] = str(a["_id"])
         del a["_id"]
+    return agents
 @app.post("/admin/add_agent")
 def add_agent(data: dict):
     if agents_col.find_one({"username": data["username"]}):
