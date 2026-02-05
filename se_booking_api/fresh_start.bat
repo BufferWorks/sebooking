@@ -1,0 +1,13 @@
+@echo off
+echo Killing any remaining stubborn dart.exe just in case...
+taskkill /F /IM dart.exe /T 2>nul
+echo.
+echo Cleaning build...
+call flutter clean
+echo.
+echo Getting dependencies...
+call flutter pub get
+echo.
+echo Launching App...
+call flutter run
+pause
