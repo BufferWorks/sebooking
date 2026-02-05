@@ -19,7 +19,8 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
   bool loading = true;
 
   String searchText = '';
-  String dateFilter = 'today'; // today | all
+  String dateFilter = 'today'; // today | all | custom
+  DateTime? selectedDate;
   String? agentFilter;
   String? centerFilter;
 
@@ -65,11 +66,18 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
       final bookingTime =
       DateTime.fromMillisecondsSinceEpoch(b['created_at'] * 1000);
 
-      final matchesDate = dateFilter == 'all'
-          ? true
-          : bookingTime.year == now.year &&
-          bookingTime.month == now.month &&
-          bookingTime.day == now.day;
+      bool matchesDate = false;
+      if (dateFilter == 'today') {
+        matchesDate = bookingTime.year == now.year &&
+            bookingTime.month == now.month &&
+            bookingTime.day == now.day;
+      } else if (dateFilter == 'all') {
+        matchesDate = true;
+      } else if (dateFilter == 'custom' && selectedDate != null) {
+        matchesDate = bookingTime.year == selectedDate!.year &&
+            bookingTime.month == selectedDate!.month &&
+            bookingTime.day == selectedDate!.day;
+      }
 
       final matchesSearch = searchText.isEmpty ||
           b['patient_name']
@@ -90,6 +98,22 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
 
       return matchesDate && matchesSearch && matchesAgent && matchesCenter;
     }).toList();
+  }
+  
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2025),
+      lastDate: DateTime(2030),
+    );
+    if (picked != null) {
+      setState(() {
+        selectedDate = picked;
+        dateFilter = 'custom';
+        applyFilters();
+      });
+    }
   }
 
   @override
@@ -125,7 +149,6 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
-              children: [
                 ChoiceChip(
                   label: const Text('Today'),
                   selected: dateFilter == 'today',
@@ -135,6 +158,15 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
                       applyFilters();
                     });
                   },
+                ),
+                const SizedBox(width: 8),
+                ActionChip(
+                  label: Text(dateFilter == 'custom' 
+                      ? DateFormat('dd MMM').format(selectedDate!) 
+                      : 'Pick Date'),
+                  avatar: const Icon(Icons.calendar_today, size: 16),
+                  onPressed: _pickDate,
+                  backgroundColor: dateFilter == 'custom' ? Colors.blue.withOpacity(0.2) : null,
                 ),
                 const SizedBox(width: 8),
                 ChoiceChip(

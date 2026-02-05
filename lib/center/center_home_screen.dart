@@ -27,7 +27,8 @@ class _CenterHomeScreenState extends State<CenterHomeScreen> {
   List filteredBookings = [];
 
   String searchText = '';
-  String dateFilter = 'today'; // today | all
+  String dateFilter = 'today'; // today | all | custom
+  DateTime? selectedDate;
 
   @override
   void initState() {
@@ -61,11 +62,18 @@ class _CenterHomeScreenState extends State<CenterHomeScreen> {
       final bookingTime =
           DateTime.fromMillisecondsSinceEpoch(b['created_at'] * 1000);
 
-      final matchesDate = dateFilter == 'all'
-          ? true
-          : bookingTime.year == now.year &&
-              bookingTime.month == now.month &&
-              bookingTime.day == now.day;
+      bool matchesDate = false;
+      if (dateFilter == 'today') {
+        matchesDate = bookingTime.year == now.year &&
+                bookingTime.month == now.month &&
+                bookingTime.day == now.day;
+      } else if (dateFilter == 'all') {
+        matchesDate = true;
+      } else if (dateFilter == 'custom' && selectedDate != null) {
+        matchesDate = bookingTime.year == selectedDate!.year &&
+                bookingTime.month == selectedDate!.month &&
+                bookingTime.day == selectedDate!.day;
+      }
 
       final matchesSearch = searchText.isEmpty ||
           b['patient_name']
@@ -79,6 +87,22 @@ class _CenterHomeScreenState extends State<CenterHomeScreen> {
 
       return matchesDate && matchesSearch;
     }).toList();
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2025),
+      lastDate: DateTime(2030),
+    );
+    if (picked != null) {
+      setState(() {
+        selectedDate = picked;
+        dateFilter = 'custom';
+        applyFilters();
+      });
+    }
   }
 
   Future<void> markDone(String bookingId) async {
@@ -168,30 +192,42 @@ class _CenterHomeScreenState extends State<CenterHomeScreen> {
           // 📅 DATE FILTER
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                ChoiceChip(
-                  label: const Text('Today'),
-                  selected: dateFilter == 'today',
-                  onSelected: (_) {
-                    setState(() {
-                      dateFilter = 'today';
-                      applyFilters();
-                    });
-                  },
-                ),
-                const SizedBox(width: 8),
-                ChoiceChip(
-                  label: const Text('All'),
-                  selected: dateFilter == 'all',
-                  onSelected: (_) {
-                    setState(() {
-                      dateFilter = 'all';
-                      applyFilters();
-                    });
-                  },
-                ),
-              ],
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  ChoiceChip(
+                    label: const Text('Today'),
+                    selected: dateFilter == 'today',
+                    onSelected: (_) {
+                      setState(() {
+                        dateFilter = 'today';
+                        applyFilters();
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  ActionChip(
+                    label: Text(dateFilter == 'custom' 
+                        ? DateFormat('dd MMM').format(selectedDate!) 
+                        : 'Pick Date'),
+                    avatar: const Icon(Icons.calendar_today, size: 16),
+                    onPressed: _pickDate,
+                    backgroundColor: dateFilter == 'custom' ? Colors.blue.withOpacity(0.2) : null,
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: const Text('All'),
+                    selected: dateFilter == 'all',
+                    onSelected: (_) {
+                      setState(() {
+                        dateFilter = 'all';
+                        applyFilters();
+                      });
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
 

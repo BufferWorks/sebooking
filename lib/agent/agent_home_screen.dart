@@ -247,7 +247,8 @@ class _AgentHistoryTabState extends State<AgentHistoryTab> {
   List bookings = [];
   List filteredBookings = [];
   bool loading = true;
-  String dateFilter = 'today';
+  String dateFilter = 'today'; // today | all | custom
+  DateTime? selectedDate;
 
   @override
   void initState() {
@@ -276,10 +277,29 @@ class _AgentHistoryTabState extends State<AgentHistoryTab> {
       final date = DateTime.fromMillisecondsSinceEpoch(b['created_at'] * 1000);
       if (dateFilter == 'today') {
         return date.year == now.year && date.month == now.month && date.day == now.day;
+      } else if (dateFilter == 'custom' && selectedDate != null) {
+        return date.year == selectedDate!.year && date.month == selectedDate!.month && date.day == selectedDate!.day;
       }
       return true;
     }).toList();
   }
+  
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2025),
+      lastDate: DateTime(2030),
+    );
+    if (picked != null) {
+      setState(() {
+        selectedDate = picked;
+        dateFilter = 'custom';
+        applyFilter();
+      });
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -287,26 +307,38 @@ class _AgentHistoryTabState extends State<AgentHistoryTab> {
       children: [
         Padding(
           padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              const Text("Filter: ", style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(width: 8),
-              ChoiceChip(
-                label: const Text('Today'),
-                selected: dateFilter == 'today',
-                onSelected: (sel) {
-                   if (sel) setState(() { dateFilter = 'today'; applyFilter(); });
-                },
-              ),
-              const SizedBox(width: 8),
-              ChoiceChip(
-                label: const Text('All'),
-                selected: dateFilter == 'all',
-                onSelected: (sel) {
-                   if (sel) setState(() { dateFilter = 'all'; applyFilter(); });
-                },
-              ),
-            ],
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                const Text("Filter: ", style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(width: 8),
+                ChoiceChip(
+                  label: const Text('Today'),
+                  selected: dateFilter == 'today',
+                  onSelected: (sel) {
+                     if (sel) setState(() { dateFilter = 'today'; applyFilter(); });
+                  },
+                ),
+                const SizedBox(width: 8),
+                ActionChip(
+                  label: Text(dateFilter == 'custom' 
+                      ? "${selectedDate!.day}/${selectedDate!.month}" 
+                      : 'Pick Date'),
+                  avatar: const Icon(Icons.calendar_today, size: 16),
+                  onPressed: _pickDate,
+                  backgroundColor: dateFilter == 'custom' ? Colors.blue.withOpacity(0.2) : null,
+                ),
+                const SizedBox(width: 8),
+                ChoiceChip(
+                  label: const Text('All'),
+                  selected: dateFilter == 'all',
+                  onSelected: (sel) {
+                     if (sel) setState(() { dateFilter = 'all'; applyFilter(); });
+                  },
+                ),
+              ],
+            ),
           ),
         ),
         Expanded(
@@ -318,6 +350,10 @@ class _AgentHistoryTabState extends State<AgentHistoryTab> {
               itemCount: filteredBookings.length,
               itemBuilder: (ctx, i) {
                 final b = filteredBookings[i];
+                // Format Date
+                final bDate = DateTime.fromMillisecondsSinceEpoch(b['created_at'] * 1000);
+                final dateStr = "${bDate.day}/${bDate.month}/${bDate.year}";
+                
                 return Card(
                   margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   child: ListTile(
@@ -326,6 +362,7 @@ class _AgentHistoryTabState extends State<AgentHistoryTab> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text("${b['test_name']} @ ${b['center_name']}"),
+                         Text("Date: $dateStr", style: const TextStyle(fontSize: 11, color: Colors.grey)),
                          Text("Status: ${b['status']} | Payment: ${b['payment_status']}", 
                           style: TextStyle(
                             color: b['payment_status'] == 'Paid' ? Colors.green : Colors.red,
