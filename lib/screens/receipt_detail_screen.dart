@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:intl/intl.dart';
+
 class ReceiptDetailScreen extends StatelessWidget {
   final Map receipt;
 
@@ -7,6 +9,9 @@ class ReceiptDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(
+        DateTime.fromMillisecondsSinceEpoch((receipt['date'] ?? 0) * 1000));
+
     return Scaffold(
       appBar: AppBar(title: const Text('Receipt Details')),
       body: Padding(
@@ -25,6 +30,7 @@ class ReceiptDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
 
+                    _row('Date', dateStr),
                     _row('Booking ID', receipt['booking_id']),
                     _row('Patient', receipt['patient_name']),
                     _row('Test', receipt['test_name']),

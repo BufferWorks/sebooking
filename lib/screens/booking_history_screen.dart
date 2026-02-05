@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import 'receipt_detail_screen.dart';
 
@@ -71,6 +72,9 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                 itemBuilder: (_, i) {
                   final h = history[i];
 
+                  final date = DateFormat('dd MMM yyyy, hh:mm a').format(
+                      DateTime.fromMillisecondsSinceEpoch((h['date'] ?? 0) * 1000));
+
                   return Card(
                     child: ListTile(
                       leading: const Icon(
@@ -84,7 +88,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                         ),
                       ),
                       subtitle: Text(
-                        'Center: ${h['center_name']}\nBooking ID: ${h['booking_id']}',
+                        'Date: $date\nCenter: ${h['center_name']}\nBooking ID: ${h['booking_id']}',
                       ),
                       trailing: Chip(
                         label: Text(h['status']),
