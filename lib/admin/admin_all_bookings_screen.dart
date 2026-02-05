@@ -134,7 +134,6 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
             ),
           ),
 
-          ),
           
           const SizedBox(height: 12),
 
