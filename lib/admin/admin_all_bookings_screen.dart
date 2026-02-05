@@ -148,7 +148,10 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
           // 📅 DATE FILTER
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+              children: [
                 ChoiceChip(
                   label: const Text('Today'),
                   selected: dateFilter == 'today',
