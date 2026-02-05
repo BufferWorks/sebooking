@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:se_booking/config.dart';
 import 'center_home_screen.dart';
 
@@ -39,6 +40,13 @@ class _CenterLoginScreenState extends State<CenterLoginScreen> {
 
     if (res.statusCode == 200) {
       final data = json.decode(res.body);
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('center_logged_in', true);
+      await prefs.setInt('center_id', data['center_id']);
+      await prefs.setString('center_name', data['center_name']);
+
+      if (!mounted) return;
 
       Navigator.pushReplacement(
         context,

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'admin_home_screen.dart';
 
 import 'package:se_booking/config.dart';
@@ -32,6 +33,11 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     setState(() => loading = false);
 
     if (res.statusCode == 200) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('admin_logged_in', true);
+
+      if (!mounted) return;
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const AdminHomeScreen()),

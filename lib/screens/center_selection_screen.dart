@@ -11,6 +11,7 @@ class CenterSelectionScreen extends StatefulWidget {
   final String testName;
   final String patientName;
   final String mobile;
+  final String paymentStatus;
 
   const CenterSelectionScreen({
     super.key,
@@ -18,6 +19,7 @@ class CenterSelectionScreen extends StatefulWidget {
     required this.testName,
     required this.patientName,
     required this.mobile,
+    this.paymentStatus = "Unpaid",
   });
 
   @override
@@ -174,6 +176,7 @@ class _CenterSelectionScreenState extends State<CenterSelectionScreen> {
                       patientName:
                       widget.patientName,
                       mobile: widget.mobile,
+                      paymentStatus: widget.paymentStatus,
                     ),
                   ),
                 );

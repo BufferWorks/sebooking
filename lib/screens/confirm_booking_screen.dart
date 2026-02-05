@@ -9,6 +9,7 @@ class ConfirmBookingScreen extends StatefulWidget {
   final double price;
   final String patientName;
   final String mobile;
+  final String paymentStatus;
 
   const ConfirmBookingScreen({
     super.key,
@@ -19,6 +20,7 @@ class ConfirmBookingScreen extends StatefulWidget {
     required this.price,
     required this.patientName,
     required this.mobile,
+    this.paymentStatus = "Unpaid",
   });
 
   @override
@@ -37,6 +39,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
       centerId: widget.centerId,
       testId: widget.testId,
       price: widget.price,
+      paymentStatus: widget.paymentStatus,
     );
 
     if (!mounted) return;

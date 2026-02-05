@@ -1,6 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'home_screen.dart';
+import '../admin/admin_home_screen.dart';
+import '../center/center_home_screen.dart';
+import '../agent/agent_home_screen.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 
@@ -11,7 +15,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
@@ -19,7 +24,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
@@ -35,20 +40,50 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.forward();
 
-    // Navigate to HomeScreen after 6 seconds
-    Timer(const Duration(seconds: 6), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const HomeScreen(),
-            transitionsBuilder: (_, animation, __, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            transitionDuration: const Duration(milliseconds: 800),
+    // Check auth and navigate after delay
+    Timer(const Duration(seconds: 4), _checkAuth);
+  }
+
+  Future<void> _checkAuth() async {
+    if (!mounted) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final isAdmin = prefs.getBool('admin_logged_in') ?? false;
+    final isCenter = prefs.getBool('center_logged_in') ?? false;
+    final isAgent = prefs.getBool('agent_logged_in') ?? false;
+
+    if (!mounted) return;
+
+    if (isAdmin) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const AdminHomeScreen()),
+      );
+    } else if (isCenter) {
+      final centerId = prefs.getInt('center_id') ?? 0;
+      final centerName = prefs.getString('center_name') ?? '';
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => CenterHomeScreen(
+            centerId: centerId,
+            centerName: centerName,
           ),
-        );
-      }
-    });
+        ),
+      );
+    } else if (isAgent) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const AgentHomeScreen()),
+      );
+    } else {
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (_, __, ___) => const HomeScreen(),
+          transitionsBuilder: (_, animation, __, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          transitionDuration: const Duration(milliseconds: 800),
+        ),
+      );
+    }
   }
 
   @override
@@ -97,7 +132,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 ),
               ),
             ),
-            
+
             // Main Content
             Center(
               child: FadeTransition(
@@ -132,7 +167,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                             borderRadius: BorderRadius.circular(27),
                           ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(15), 
+                            borderRadius: BorderRadius.circular(15),
                             child: Image.asset(
                               'assets/logo.png',
                               width: 140,
@@ -143,7 +178,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         ),
                       ),
                       const SizedBox(height: 40),
-                      
+
                       // App Name
                       const Text(
                         "SE Booking",
@@ -173,13 +208,14 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         ),
                       ),
                       const SizedBox(height: 50),
-                      
+
                       // Loading Indicator
                       const SizedBox(
                         width: 40,
                         height: 40,
                         child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
                           strokeWidth: 3,
                         ),
                       ),

@@ -1,0 +1,16 @@
+[build]
+  publish = "build/web"
+  command = "flutter build web --release"
+
+# Proxy API requests to avoid Mixed Content errors
+[[redirects]]
+  from = "/api/*"
+  to = "http://147.79.71.199:8000/:splat"
+  status = 200
+  force = true
+
+# SPA Fallback (Must be last)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

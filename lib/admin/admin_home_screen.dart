@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'centers_screen.dart';
 import 'categories_screen.dart';
 import 'tests_screen.dart';
 import 'pricing_centers_screen.dart';
 import 'admin_all_bookings_screen.dart';
 import 'manage_notice_screen.dart';
+import 'manage_agents_screen.dart';
+import '../screens/home_screen.dart';
 
 
 
@@ -14,7 +17,24 @@ class AdminHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Admin Dashboard')),
+      appBar: AppBar(
+        title: const Text('Admin Dashboard'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.clear(); // Or remove specific keys
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const HomeScreen()),
+                  (route) => false,
+                );
+              }
+            },
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -24,6 +44,7 @@ class AdminHomeScreen extends StatelessWidget {
           _item(context, 'Pricing (Center Wise)', const PricingCentersScreen()),
           _item(context, 'All Center Bookings', const AdminAllBookingsScreen()),
           _item(context, 'Manage Home Notice', const ManageNoticeScreen()),
+          _item(context, 'Manage Agents', const ManageAgentsScreen()),
 
 
         ],

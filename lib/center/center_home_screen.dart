@@ -2,8 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:se_booking/config.dart';
+import '../screens/home_screen.dart';
 
 class CenterHomeScreen extends StatefulWidget {
   final int centerId;
@@ -57,13 +59,13 @@ class _CenterHomeScreenState extends State<CenterHomeScreen> {
 
     filteredBookings = allBookings.where((b) {
       final bookingTime =
-      DateTime.fromMillisecondsSinceEpoch(b['created_at'] * 1000);
+          DateTime.fromMillisecondsSinceEpoch(b['created_at'] * 1000);
 
       final matchesDate = dateFilter == 'all'
           ? true
           : bookingTime.year == now.year &&
-          bookingTime.month == now.month &&
-          bookingTime.day == now.day;
+              bookingTime.month == now.month &&
+              bookingTime.day == now.day;
 
       final matchesSearch = searchText.isEmpty ||
           b['patient_name']
@@ -89,15 +91,59 @@ class _CenterHomeScreenState extends State<CenterHomeScreen> {
     loadBookings();
   }
 
+  Future<void> togglePayment(String bookingId) async {
+    bool? confirm = await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Mark as Paid?'),
+        content: const Text('Are you sure you want to mark this booking as PAID?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Yes, Paid')),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await http.post(
+        Uri.parse('${Config.baseUrl}/center/update_payment_status'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          "booking_id": bookingId,
+          "payment_status": "Paid"
+        }),
+      );
+      loadBookings();
+    }
+  }
+
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.centerName),
         actions: [
-          IconButton(
+            IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: loadBookings,
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _logout,
           ),
         ],
       ),
@@ -211,6 +257,64 @@ class _CenterHomeScreenState extends State<CenterHomeScreen> {
                             fontSize: 12,
                             color: Colors.grey,
                           ),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // Payment Status with Toggle (Only show status, hide Agent Name)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end, // Align to right since we removed the left text
+                          children: [
+                            InkWell(
+                              onTap: (b['payment_status'] ?? 'Unpaid') == 'Paid'
+                                  ? null
+                                  : () => togglePayment(b['booking_id']),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: (b['payment_status'] ?? 'Unpaid') ==
+                                          'Paid'
+                                      ? Colors.green.withOpacity(0.1)
+                                      : Colors.red.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                    color: (b['payment_status'] ?? 'Unpaid') ==
+                                            'Paid'
+                                        ? Colors.green
+                                        : Colors.red,
+                                    width: 0.5,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      b['payment_status'] ?? 'Unpaid',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color:
+                                            (b['payment_status'] ?? 'Unpaid') ==
+                                                    'Paid'
+                                                ? Colors.green
+                                                : Colors.red,
+                                      ),
+                                    ),
+                                    if ((b['payment_status'] ?? 'Unpaid') == 'Unpaid')
+                                      const Padding(
+                                        padding: EdgeInsets.only(left: 4),
+                                        child: Icon(Icons.edit, size: 10, color: Colors.red),
+                                      ),
+                                    if ((b['payment_status'] ?? 'Unpaid') == 'Paid')
+                                      const Padding(
+                                        padding: EdgeInsets.only(left: 4),
+                                        child: Icon(Icons.lock, size: 10, color: Colors.green),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
 
                         const SizedBox(height: 12),

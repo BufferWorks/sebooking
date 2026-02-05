@@ -10,6 +10,7 @@ class TestCategoryScreen extends StatefulWidget {
   final String categoryName;
   final String patientName;
   final String mobile;
+  final String paymentStatus;
 
   const TestCategoryScreen({
     super.key,
@@ -17,6 +18,7 @@ class TestCategoryScreen extends StatefulWidget {
     required this.categoryName,
     required this.patientName,
     required this.mobile,
+    this.paymentStatus = "Unpaid",
   });
 
   @override
@@ -147,6 +149,7 @@ class _TestCategoryScreenState extends State<TestCategoryScreen> {
                                 patientName:
                                 widget.patientName,
                                 mobile: widget.mobile,
+                                paymentStatus: widget.paymentStatus,
                               ),
                         ),
                       );

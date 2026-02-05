@@ -8,6 +8,7 @@ import 'booking_history_screen.dart';
 import 'about_us_screen.dart';
 import '../center/center_login_screen.dart';
 import '../admin/admin_login_screen.dart';
+import '../agent/agent_login_screen.dart';
 import '../config.dart';
 
 
@@ -472,6 +473,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (_) => const AdminLoginScreen(),
+                ),
+              );
+            },
+          ),
+          
+          ListTile(
+            leading: const Icon(Icons.support_agent),
+            title: const Text('Agent Login'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AgentLoginScreen(),
                 ),
               );
             },
