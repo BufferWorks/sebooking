@@ -20,6 +20,11 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
 
   String searchText = '';
   String dateFilter = 'today'; // today | all
+  String? agentFilter;
+  String? centerFilter;
+
+  List<String> uniqueAgents = [];
+  List<String> uniqueCenters = [];
 
   @override
   void initState() {
@@ -36,6 +41,15 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
 
     if (res.statusCode == 200) {
       allBookings = jsonDecode(res.body);
+      
+      uniqueAgents = allBookings
+          .map((e) => e['booked_by'].toString())
+          .toSet()
+          .toList();
+      uniqueCenters = allBookings
+          .map((e) => e['center_name'].toString())
+          .toSet()
+          .toList();
     } else {
       allBookings = [];
     }
@@ -71,7 +85,10 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
               .toLowerCase()
               .contains(searchText.toLowerCase());
 
-      return matchesDate && matchesSearch;
+      final matchesAgent = agentFilter == null || b['booked_by'] == agentFilter;
+      final matchesCenter = centerFilter == null || b['center_name'] == centerFilter;
+
+      return matchesDate && matchesSearch && matchesAgent && matchesCenter;
     }).toList();
   }
 
@@ -130,6 +147,48 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
                     });
                   },
                 ),
+              ],
+                  },
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 12),
+
+          // 🧹 ADDITIONAL FILTERS (Agent & Center)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                _buildDropdown(
+                    "Agent",
+                    agentFilter,
+                    uniqueAgents,
+                    (v) => setState(() {
+                      agentFilter = v;
+                      applyFilters();
+                    })),
+                const SizedBox(width: 8),
+                _buildDropdown(
+                    'Center',
+                    centerFilter,
+                    uniqueCenters,
+                    (v) => setState(() {
+                      centerFilter = v;
+                      applyFilters();
+                    })),
+                if (agentFilter != null || centerFilter != null)
+                  IconButton(
+                      onPressed: () {
+                        setState(() {
+                          agentFilter = null;
+                          centerFilter = null;
+                          applyFilters();
+                        });
+                      },
+                      icon: const Icon(Icons.clear, color: Colors.red)),
               ],
             ),
           ),
@@ -267,30 +326,40 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: (b['payment_status'] ?? 'Unpaid') == 'Paid' 
-                                          ? Colors.green.withOpacity(0.1) 
-                                          : Colors.red.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(
-                                         color: (b['payment_status'] ?? 'Unpaid') == 'Paid' 
-                                          ? Colors.green 
-                                          : Colors.red,
-                                         width: 0.5
-                                      )
-                                    ),
-                                    child: Text(
-                                      b['payment_status'] ?? 'Unpaid',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
+                                InkWell(
+                                  onTap: () => toggleAdminPayment(b['booking_id'], b['payment_status'] ?? 'Unpaid'),
+                                  child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
                                         color: (b['payment_status'] ?? 'Unpaid') == 'Paid' 
+                                            ? Colors.green.withOpacity(0.1) 
+                                            : Colors.red.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(
+                                           color: (b['payment_status'] ?? 'Unpaid') == 'Paid' 
                                             ? Colors.green 
                                             : Colors.red,
+                                           width: 0.5
+                                        )
                                       ),
-                                    ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            b['payment_status'] ?? 'Unpaid',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: (b['payment_status'] ?? 'Unpaid') == 'Paid' 
+                                                  ? Colors.green 
+                                                  : Colors.red,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          const Icon(Icons.edit, size: 10, color: Colors.blueGrey),
+                                        ],
+                                      ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -334,6 +403,57 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
       ),
     );
   }
+  Widget _buildDropdown(String label, String? value, List<String> items, Function(String?) onChanged) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          hint: Text(label),
+          value: value,
+          isDense: true,
+          items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
+  // Admin Toggle Payment (Same as Center but uses "Admin" as updater implicitly via 'updated_by_name')
+  Future<void> toggleAdminPayment(String bookingId, String currentStatus) async {
+    // Logic: Toggle Unpaid <-> Paid
+    final newStatus = currentStatus == 'Paid' ? 'Unpaid' : 'Paid';
+    
+    // Confirm dialog
+    bool? confirm = await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Mark as $newStatus?'),
+        content: Text('Set status to $newStatus for this booking?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Yes')),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await http.post(
+        Uri.parse('${Config.baseUrl}/center/update_payment_status'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          "booking_id": bookingId,
+          "payment_status": newStatus,
+          "updated_by_name": "Admin" 
+        }),
+      );
+      loadBookings();
+    }
+  }
+
   Widget _summaryCard(String title, String count, Color color) {
     return Card(
       elevation: 2,

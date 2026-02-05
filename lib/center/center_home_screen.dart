@@ -114,7 +114,8 @@ class _CenterHomeScreenState extends State<CenterHomeScreen> {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           "booking_id": bookingId,
-          "payment_status": "Paid"
+          "payment_status": "Paid",
+          "updated_by_name": widget.centerName
         }),
       );
       loadBookings();
