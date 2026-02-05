@@ -148,9 +148,6 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
                   },
                 ),
               ],
-                  },
-                ),
-              ],
             ),
           ),
           
