@@ -24,6 +24,9 @@ class ApiService {
   static Future<String> bookTest({
     required String name,
     required String mobile,
+    required String age,
+    required String gender,
+    required String address,
     required int centerId,
     required int testId,
     required double price,
@@ -40,6 +43,9 @@ class ApiService {
       body: json.encode({
         "name": name,
         "mobile": mobile,
+        "age": age,
+        "gender": gender,
+        "address": address,
         "center_id": centerId,
         "test_id": testId,
         "price": price,
