@@ -11,6 +11,9 @@ class ConfirmBookingScreen extends StatefulWidget {
   final double price;
   final String patientName;
   final String mobile;
+  final String age; 
+  final String gender; 
+  final String address; 
   final String paymentStatus;
 
   const ConfirmBookingScreen({
@@ -22,6 +25,9 @@ class ConfirmBookingScreen extends StatefulWidget {
     required this.price,
     required this.patientName,
     required this.mobile,
+    required this.age,
+    required this.gender,
+    required this.address,
     this.paymentStatus = "Unpaid",
   });
 
@@ -47,7 +53,12 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
     super.initState();
     _nameController = TextEditingController(text: widget.patientName);
     _mobileController = TextEditingController(text: widget.mobile);
-    
+    _ageController.text = widget.age;
+    _addressController.text = widget.address;
+    if (['Male', 'Female', 'Other'].contains(widget.gender)) {
+       _gender = widget.gender;
+    }
+
     _checkAgent();
     if (widget.paymentStatus == 'Paid') {
       _amountController.text = widget.price.toStringAsFixed(0);
