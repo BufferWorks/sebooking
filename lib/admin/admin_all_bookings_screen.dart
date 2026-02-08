@@ -115,9 +115,45 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
         applyFilters();
       });
     }
+  Future<void> _verifyPayment(Map b) async {
+    final price = double.tryParse(b['price'].toString()) ?? 0;
+    
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Verify Payment'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min, 
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+             const Text('Has the full amount been received in the company account?'),
+             const SizedBox(height: 12),
+             Text('Tracking ID / Status:\n${b['payment_status']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blueGrey)),
+             const SizedBox(height: 12),
+             Text('Amount to Verify: ₹${price.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green)),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            onPressed: () async {
+              // Mark as collected by Center (Company Account)
+              await ApiService.updatePaymentDetails(
+                  bookingId: b['booking_id'],
+                  agentCollected: 0.0,
+                  centerCollected: price,
+                  updatedByName: "Admin (Verified Online)",
+              );
+              if (mounted) Navigator.pop(ctx);
+              loadBookings();
+            },
+            child: const Text('Confirm Received', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -342,8 +378,7 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
                         ),
 
                         const SizedBox(height: 8),
-                            
-                          // 🆕 Booked By & Payment Details
+                                                      // 🆕 Booked By & Payment Details
                             Builder(
                               builder: (context) {
                                 final price = double.tryParse(b['price'].toString()) ?? 0;
@@ -351,56 +386,92 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
                                 final centerColl = double.tryParse(b['center_collected'].toString()) ?? 0;
                                 final totalPaid = agentColl + centerColl;
                                 final due = price - totalPaid;
+                                final payStatus = b['payment_status'] ?? 'Unpaid';
+                                final isPending = payStatus.toString().contains('Pending');
 
                                 return Container(
                                   width: double.infinity,
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: Colors.grey.shade50,
+                                    color: isPending ? Colors.orange.shade50 : Colors.grey.shade50,
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: Colors.grey.shade200),
+                                    border: Border.all(color: isPending ? Colors.orange.shade200 : Colors.grey.shade200),
                                   ),
                                   child: Column(
                                     children: [
                                       _infoRow('Booked By', b['booked_by'] ?? 'Customer'),
                                       const Divider(height: 12),
-                                      _infoRow('Price', '₹${price.toStringAsFixed(0)}'),
-                                      const SizedBox(height: 4),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          const Text('Paid', style: TextStyle(color: Colors.green, fontSize: 13)),
-                                          Text(
-                                            '₹${totalPaid.toStringAsFixed(0)} (Ag: ${agentColl.toInt()} | Ctr: ${centerColl.toInt()})',
-                                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 13),
+                                      
+                                      if (isPending) ...[
+                                         Container(
+                                           padding: const EdgeInsets.all(8),
+                                           decoration: BoxDecoration(
+                                             color: Colors.white,
+                                             borderRadius: BorderRadius.circular(6),
+                                             border: Border.all(color: Colors.orange.shade100),
+                                           ),
+                                           child: Column(
+                                             children: [
+                                               Row(children: [
+                                                  const Icon(Icons.warning_amber, color: Colors.deepOrange, size: 18),
+                                                  const SizedBox(width: 8),
+                                                  Expanded(child: Text(payStatus, style: const TextStyle(color: Colors.deepOrange, fontWeight: FontWeight.bold, fontSize: 13))),
+                                               ]),
+                                               const SizedBox(height: 8),
+                                               const Text("User claims to have paid full amount via UPI.", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                               const SizedBox(height: 8),
+                                               SizedBox(
+                                                 width: double.infinity,
+                                                 height: 36,
+                                                 child: ElevatedButton.icon(
+                                                   style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                                                   icon: const Icon(Icons.check_circle, size: 16),
+                                                   label: const Text('Verify & Mark Paid'),
+                                                   onPressed: () => _verifyPayment(b),
+                                                 ),
+                                               ),
+                                             ],
+                                           ),
+                                         ),
+                                      ] else ...[
+                                          _infoRow('Price', '₹${price.toStringAsFixed(0)}'),
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              const Text('Paid', style: TextStyle(color: Colors.green, fontSize: 13)),
+                                              Text(
+                                                '₹${totalPaid.toStringAsFixed(0)} (Ag: ${agentColl.toInt()} | Ctr: ${centerColl.toInt()})',
+                                                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 13),
+                                              ),
+                                            ],
                                           ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text('Due', style: TextStyle(color: due > 0 ? Colors.red : Colors.grey, fontSize: 13)),
-                                          Text(
-                                            '₹${due.toStringAsFixed(0)}',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold, 
-                                              color: due > 0 ? Colors.red : Colors.grey,
-                                              fontSize: 13
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text('Due', style: TextStyle(color: due > 0 ? Colors.red : Colors.grey, fontSize: 13)),
+                                              Text(
+                                                '₹${due.toStringAsFixed(0)}',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold, 
+                                                  color: due > 0 ? Colors.red : Colors.grey,
+                                                  fontSize: 13
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          SizedBox(
+                                            width: double.infinity,
+                                            height: 32,
+                                            child: OutlinedButton.icon(
+                                              icon: const Icon(Icons.edit, size: 14),
+                                              label: const Text('Update Payment', style: TextStyle(fontSize: 12)),
+                                              onPressed: () => _openPaymentDialog(b),
                                             ),
                                           ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 8),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        height: 32,
-                                        child: OutlinedButton.icon(
-                                          icon: const Icon(Icons.edit, size: 14),
-                                          label: const Text('Update Payment', style: TextStyle(fontSize: 12)),
-                                          onPressed: () => _openPaymentDialog(b),
-                                        ),
-                                      ),
+                                      ],
                                     ],
                                   ),
                                 );
