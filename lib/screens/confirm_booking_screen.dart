@@ -197,6 +197,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                     filled: true,
                   ),
                 ),
+            ] else ...[
                  // USER QR PAYMENT
                  const SizedBox(height: 24),
                  const Center(child: Text("Scan & Pay via UPI", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
