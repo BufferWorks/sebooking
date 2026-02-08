@@ -190,162 +190,94 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Confirm Booking')),
-      body: Padding(
+      body: ListView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // Patient Form
-                    TextField(
-                      controller: _nameController, 
-                      decoration: const InputDecoration(labelText: 'Patient Name *', border: OutlineInputBorder())
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _mobileController, 
-                      keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(labelText: 'Mobile Number (10-12 digits) *', border: OutlineInputBorder())
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                        children: [
-                            Expanded(child: TextField(
-                              controller: _ageController, 
-                              keyboardType: TextInputType.number, 
-                              decoration: const InputDecoration(labelText: 'Age *', border: OutlineInputBorder())
-                            )),
-                            const SizedBox(width: 12),
-                            Expanded(child: DropdownButtonFormField<String>(
-                                value: _gender,
-                                decoration: const InputDecoration(labelText: 'Gender *', border: OutlineInputBorder()),
-                                items: ['Male', 'Female', 'Other'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                                onChanged: (v) => setState(() => _gender = v!),
-                            )),
-                        ],
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _addressController, 
-                      maxLines: 2, 
-                      decoration: const InputDecoration(labelText: 'Address *', border: OutlineInputBorder())
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    const SizedBox(height: 24),
-                    const SizedBox(height: 24),
-                    const Text("Test Information", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    const Divider(),
-                    Text("Test: ${widget.testName}"),
-                    Text("Center: ${widget.centerName}"),
-                    Text("Price: ₹${widget.price.toStringAsFixed(0)}"),
-                    const Divider(),
-                    const SizedBox(height: 16),
+        children: [
+          // 1. Patient Details Form
+          TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Patient Name *', border: OutlineInputBorder())),
+          const SizedBox(height: 12),
+          TextField(controller: _mobileController, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Mobile Number *', border: OutlineInputBorder())),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: TextField(controller: _ageController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Age *', border: OutlineInputBorder()))),
+              const SizedBox(width: 12),
+              Expanded(child: DropdownButtonFormField<String>(
+                value: _gender,
+                decoration: const InputDecoration(labelText: 'Gender *', border: OutlineInputBorder()),
+                items: ['Male', 'Female', 'Other'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                onChanged: (v) => setState(() => _gender = v!),
+              )),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(controller: _addressController, maxLines: 2, decoration: const InputDecoration(labelText: 'Address *', border: OutlineInputBorder())),
+          
+          const SizedBox(height: 24),
+          
+          // 2. Test Information
+          const Text("Test Information", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const Divider(),
+          ListTile(
+            title: Text(widget.testName),
+            subtitle: const Text("Test Name"),
+            dense: true,
+          ),
+          ListTile(
+            title: Text(widget.centerName),
+            subtitle: const Text("Center"),
+            dense: true,
+          ),
+          ListTile(
+            title: Text("₹${widget.price.toStringAsFixed(0)}", style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
+            subtitle: const Text("Price"),
+            dense: true,
+          ),
+          const Divider(),
+          const SizedBox(height: 16),
 
-                    if (isAgent) ...[
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.blue),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                               const Text("Agent Collection Required", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
-                               const SizedBox(height: 4),
-                               Text("You must collect the full amount of ₹${widget.price.toStringAsFixed(0)} from the patient.", style: const TextStyle(fontSize: 12)),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _amountController,
-                          keyboardType: TextInputType.number,
-                          readOnly: true, // Enforce full payment
-                          decoration: const InputDecoration(
-                            labelText: 'Amount Collected (₹)',
-                            prefixText: '₹ ',
-                            border: OutlineInputBorder(),
-                            fillColor: Colors.white,
-                            filled: true,
-                          ),
-                        ),
-                    ] else ...[
-                         // USER QR PAYMENT
-                         const SizedBox(height: 24),
-                         const Center(child: Text("Scan & Pay via UPI", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
-                         const SizedBox(height: 12),
-                         Center(
-                           child: Container(
-                             padding: const EdgeInsets.all(8),
-                             decoration: BoxDecoration(border: Border.all(color: Colors.grey)),
-                             child: Image.network(
-                               "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi%3A%2F%2Fpay%3Fpa%3D9669002008%40ybl%26pn%3DSeBooking%26am%3D${widget.price}%26tn%3DBooking",
-                               height: 150,
-                               width: 150,
-                               loadingBuilder: (context, child, loadingProgress) {
-                                 if (loadingProgress == null) return child;
-                                 return const SizedBox(height: 150, width: 150, child: Center(child: CircularProgressIndicator()));
-                               },
-                               errorBuilder: (context, error, stackTrace) {
-                                 return const SizedBox(height: 150, width: 150, child: Center(child: Icon(Icons.error)));
-                               },
-                             ),
-                           ),
-                         ),
-                         const SizedBox(height: 16),
-                         TextField(
-                            controller: _txnController,
-                            decoration: const InputDecoration(
-                              labelText: "Enter UPI Transaction ID / Ref No",
-                              hintText: "e.g. 3214xxxxxxx",
-                              border: OutlineInputBorder(),
-                              helperText: "Required for payment verification",
-                            ),
-                            onChanged: (val) {
-                              setState(() {});
-                            },
-                         ),
-                         const SizedBox(height: 8),
-                         const Text("Your booking will be 'Pending Verification' until approved.", style: TextStyle(color: Colors.orange, fontSize: 12)),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            
-
-
-            const Spacer(),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                // Agent: standard loading check
-                // User: must enter Txn ID
-                onPressed: loading || (!isAgent && _txnController.text.length < 4) ? null : book,
-                child: loading
-                    ? const SizedBox(
-                  height: 22,
-                  width: 22,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
+          // 3. Payment Logic (Agent vs User)
+          if (isAgent) ...[
+             Container(
+               padding: const EdgeInsets.all(12),
+               decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.blue)),
+               child: const Text("Agent Collection: Collect full amount from patient.", style: TextStyle(color: Colors.blue)),
+             ),
+             const SizedBox(height: 12),
+             TextField(controller: _amountController, readOnly: true, decoration: const InputDecoration(labelText: 'Amount Collected (₹)', border: OutlineInputBorder())),
+          ] else ...[
+             const Center(child: Text("Scan & Pay via UPI", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+             const SizedBox(height: 12),
+             Center(
+                child: Container(
+                  decoration: BoxDecoration(border: Border.all(color: Colors.grey)),
+                  child: Image.network(
+                    "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi%3A%2F%2Fpay%3Fpa%3D9669002008%40ybl%26pn%3DSeBooking%26am%3D${widget.price}%26tn%3DBooking",
+                    height: 200, width: 200,
+                    errorBuilder: (_,__,___) => const Icon(Icons.broken_image, size: 50),
                   ),
-                )
-                    : const Text(
-                  'Confirm & Book',
-                  style: TextStyle(fontSize: 16),
                 ),
-              ),
-            ),
+             ),
+             const SizedBox(height: 16),
+             TextField(
+               controller: _txnController,
+               decoration: const InputDecoration(labelText: "Enter UPI Transaction ID", hintText: "Required", border: OutlineInputBorder()),
+               onChanged: (v) => setState((){}),
+             ),
+             const SizedBox(height: 8),
+             const Text("Booking will be 'Pending Verification'.", style: TextStyle(color: Colors.orange, fontSize: 12)),
           ],
-        ),
+
+          const SizedBox(height: 32),
+
+          // 4. Submit Button
+          ElevatedButton(
+            onPressed: loading || (!isAgent && _txnController.text.length < 4) ? null : book,
+            style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+            child: loading ? const CircularProgressIndicator(color: Colors.white) : const Text('Confirm & Book', style: TextStyle(fontSize: 18)),
+          ),
+          const SizedBox(height: 40),
+        ],
       ),
     );
   }
