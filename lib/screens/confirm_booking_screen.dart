@@ -145,7 +145,23 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Confirm Booking')),
+      appBar: AppBar(
+        title: const Text("Confirm Booking"),
+        actions: [
+          if (isAgent)
+            TextButton.icon(
+              icon: const Icon(Icons.person_off, color: Colors.white),
+              label: const Text("Book as Guest", style: TextStyle(color: Colors.white)),
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('agent_logged_in', false);
+                setState(() {
+                  isAgent = false;
+                });
+              },
+            ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
