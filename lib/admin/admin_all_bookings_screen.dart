@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
 import 'package:se_booking/config.dart';
+import '../services/api_service.dart';
 
 class AdminAllBookingsScreen extends StatefulWidget {
   const AdminAllBookingsScreen({super.key});
@@ -342,76 +343,69 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
 
                         const SizedBox(height: 8),
                             
-                        // 🆕 Booked By & Payment Details
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'By: ${b['booked_by'] ?? 'Customer'}',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: (b['booked_by'] ?? 'Customer') == 'Customer' 
-                                        ? Colors.blueGrey 
-                                        : Colors.purple,
-                                    fontWeight: FontWeight.w600,
+                          // 🆕 Booked By & Payment Details
+                            Builder(
+                              builder: (context) {
+                                final price = double.tryParse(b['price'].toString()) ?? 0;
+                                final agentColl = double.tryParse(b['agent_collected'].toString()) ?? 0;
+                                final centerColl = double.tryParse(b['center_collected'].toString()) ?? 0;
+                                final totalPaid = agentColl + centerColl;
+                                final due = price - totalPaid;
+
+                                return Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade50,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.grey.shade200),
                                   ),
-                                ),
-                                InkWell(
-                                  onTap: () => toggleAdminPayment(b['booking_id'], b['payment_status'] ?? 'Unpaid'),
-                                  child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: (b['payment_status'] ?? 'Unpaid') == 'Paid' 
-                                            ? Colors.green.withOpacity(0.1) 
-                                            : Colors.red.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(4),
-                                        border: Border.all(
-                                           color: (b['payment_status'] ?? 'Unpaid') == 'Paid' 
-                                            ? Colors.green 
-                                            : Colors.red,
-                                           width: 0.5
-                                        )
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
+                                  child: Column(
+                                    children: [
+                                      _infoRow('Booked By', b['booked_by'] ?? 'Customer'),
+                                      const Divider(height: 12),
+                                      _infoRow('Price', '₹${price.toStringAsFixed(0)}'),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
+                                          const Text('Paid', style: TextStyle(color: Colors.green, fontSize: 13)),
                                           Text(
-                                            b['payment_status'] ?? 'Unpaid',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                              color: (b['payment_status'] ?? 'Unpaid') == 'Paid' 
-                                                  ? Colors.green 
-                                                  : Colors.red,
-                                            ),
+                                            '₹${totalPaid.toStringAsFixed(0)} (Ag: ${agentColl.toInt()} | Ctr: ${centerColl.toInt()})',
+                                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 13),
                                           ),
-                                          const SizedBox(width: 4),
-                                          const Icon(Icons.edit, size: 10, color: Colors.blueGrey),
                                         ],
                                       ),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text('Due', style: TextStyle(color: due > 0 ? Colors.red : Colors.grey, fontSize: 13)),
+                                          Text(
+                                            '₹${due.toStringAsFixed(0)}',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold, 
+                                              color: due > 0 ? Colors.red : Colors.grey,
+                                              fontSize: 13
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: 32,
+                                        child: OutlinedButton.icon(
+                                          icon: const Icon(Icons.edit, size: 14),
+                                          label: const Text('Update Payment', style: TextStyle(fontSize: 12)),
+                                          onPressed: () => _openPaymentDialog(b),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                              ],
+                                );
+                              }
                             ),
-                            
-                            // Show WHO collected payment if Paid
-                            if ((b['payment_status'] ?? 'Unpaid') == 'Paid')
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Text(
-                                  'Collected by: ${b['payment_updated_by'] ?? b['booked_by'] ?? 'Agent'}',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.green,
-                                    fontStyle: FontStyle.italic
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
 
                         const SizedBox(height: 8),
 
@@ -455,36 +449,85 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
     );
   }
 
-  // Admin Toggle Payment (Same as Center but uses "Admin" as updater implicitly via 'updated_by_name')
-  Future<void> toggleAdminPayment(String bookingId, String currentStatus) async {
-    // Logic: Toggle Unpaid <-> Paid
-    final newStatus = currentStatus == 'Paid' ? 'Unpaid' : 'Paid';
-    
-    // Confirm dialog
-    bool? confirm = await showDialog(
+  Future<void> _openPaymentDialog(Map b) async {
+    final price = double.tryParse(b['price'].toString()) ?? 0;
+    final agentColl = double.tryParse(b['agent_collected'].toString()) ?? 0;
+    final centerColl = double.tryParse(b['center_collected'].toString()) ?? 0;
+
+    final agentController = TextEditingController(text: agentColl.toStringAsFixed(0));
+    final centerController = TextEditingController(text: centerColl.toStringAsFixed(0));
+
+    await showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Mark as $newStatus?'),
-        content: Text('Set status to $newStatus for this booking?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Yes')),
-        ],
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Update Payment (Admin Override)'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _infoRow('Total Price', '₹${price.toStringAsFixed(0)}'),
+                const Divider(),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: agentController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Agent Collection',
+                    helperText: 'Collected by Agent',
+                    prefixText: '₹ ',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: centerController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Center Collection',
+                     helperText: 'Collected by Center',
+                    prefixText: '₹ ',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final ac = double.tryParse(agentController.text) ?? 0;
+                final cc = double.tryParse(centerController.text) ?? 0;
+
+                await ApiService.updatePaymentDetails(
+                  bookingId: b['booking_id'],
+                  agentCollected: ac,
+                  centerCollected: cc,
+                  updatedByName: "Admin",
+                );
+                if (mounted) Navigator.pop(ctx);
+                loadBookings();
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _infoRow(String k, String v) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [Text(k), Text(v, style: const TextStyle(fontWeight: FontWeight.bold))],
       ),
     );
-
-    if (confirm == true) {
-      await http.post(
-        Uri.parse('${Config.baseUrl}/center/update_payment_status'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          "booking_id": bookingId,
-          "payment_status": newStatus,
-          "updated_by_name": "Admin" 
-        }),
-      );
-      loadBookings();
-    }
   }
 
   Widget _summaryCard(String title, String count, Color color) {

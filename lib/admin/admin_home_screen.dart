@@ -7,6 +7,7 @@ import 'pricing_centers_screen.dart';
 import 'admin_all_bookings_screen.dart';
 import 'manage_notice_screen.dart';
 import 'manage_agents_screen.dart';
+import 'admin_stats_screen.dart';
 import '../screens/home_screen.dart';
 
 
@@ -45,6 +46,7 @@ class AdminHomeScreen extends StatelessWidget {
           _item(context, 'All Center Bookings', const AdminAllBookingsScreen()),
           _item(context, 'Manage Home Notice', const ManageNoticeScreen()),
           _item(context, 'Manage Agents', const ManageAgentsScreen()),
+          _item(context, 'Report (Center Wise Stats)', const AdminStatsScreen()),
 
 
         ],

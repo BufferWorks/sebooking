@@ -358,19 +358,31 @@ class _AgentHistoryTabState extends State<AgentHistoryTab> {
                   margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   child: ListTile(
                     title: Text(b['patient_name']),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("${b['test_name']} @ ${b['center_name']}"),
-                         Text("Date: $dateStr", style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                         Text("Status: ${b['status']} | Payment: ${b['payment_status']}", 
-                          style: TextStyle(
-                            color: b['payment_status'] == 'Paid' ? Colors.green : Colors.red,
-                            fontSize: 12
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("${b['test_name']} @ ${b['center_name']}"),
+                          Text("Date: $dateStr", style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                          Row(
+                            children: [
+                              Text("Status: ${b['status']} | ", style: const TextStyle(fontSize: 12)),
+                              Text(
+                                "Payment: ${b['payment_status']}", 
+                                style: TextStyle(
+                                  color: b['payment_status'] == 'Paid' ? Colors.green : Colors.red,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
+                          if ((b['agent_collected'] ?? 0) > 0)
+                             Text(
+                               "Collected by You: ₹${b['agent_collected']}",
+                               style: const TextStyle(color: Colors.purple, fontWeight: FontWeight.bold, fontSize: 12),
+                             ),
+                        ],
+                      ),
                     trailing: Text("₹${b['price']}", style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 );

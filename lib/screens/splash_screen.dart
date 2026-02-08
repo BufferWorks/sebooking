@@ -47,43 +47,52 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _checkAuth() async {
     if (!mounted) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    final isAdmin = prefs.getBool('admin_logged_in') ?? false;
-    final isCenter = prefs.getBool('center_logged_in') ?? false;
-    final isAgent = prefs.getBool('agent_logged_in') ?? false;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final isAdmin = prefs.getBool('admin_logged_in') ?? false;
+      final isCenter = prefs.getBool('center_logged_in') ?? false;
+      final isAgent = prefs.getBool('agent_logged_in') ?? false;
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (isAdmin) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const AdminHomeScreen()),
-      );
-    } else if (isCenter) {
-      final centerId = prefs.getInt('center_id') ?? 0;
-      final centerName = prefs.getString('center_name') ?? '';
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => CenterHomeScreen(
-            centerId: centerId,
-            centerName: centerName,
+      if (isAdmin) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const AdminHomeScreen()),
+        );
+      } else if (isCenter) {
+        final centerId = prefs.getInt('center_id') ?? 0;
+        final centerName = prefs.getString('center_name') ?? '';
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => CenterHomeScreen(
+              centerId: centerId,
+              centerName: centerName,
+            ),
           ),
-        ),
-      );
-    } else if (isAgent) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const AgentHomeScreen()),
-      );
-    } else {
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const HomeScreen(),
-          transitionsBuilder: (_, animation, __, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          transitionDuration: const Duration(milliseconds: 800),
-        ),
-      );
+        );
+      } else if (isAgent) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const AgentHomeScreen()),
+        );
+      } else {
+        _goHome();
+      }
+    } catch (e) {
+      debugPrint("Error in Splash: $e");
+      if (mounted) _goHome();
     }
+  }
+
+  void _goHome() {
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const HomeScreen(),
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 800),
+      ),
+    );
   }
 
   @override

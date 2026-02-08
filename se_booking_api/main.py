@@ -105,28 +105,147 @@ def add_booking(data: dict):
     booking_id = f"BKG{int(time.time())}"
     current_time = int(time.time())
     
-    payment_status = data.get("payment_status", "Unpaid")
     booked_by = data.get("booked_by", "Customer")
+    price = float(data["price"])
     
+    # Amount paid at booking time
+    paid_amount = float(data.get("paid_amount", 0))
+    
+    # Validation: If legacy 'payment_status'='Paid', assume full price
+    if data.get("payment_status") == "Paid" and paid_amount == 0:
+        paid_amount = price
+
+    agent_collected = 0.0
+    center_collected = 0.0
+
+    # Attribution
+    if booked_by not in ["Customer", "Center"]: 
+        agent_collected = paid_amount
+    elif booked_by == "Center":
+        center_collected = paid_amount
+    
+    # Calculate Status
+    total_paid = agent_collected + center_collected
+    balance_due = price - total_paid
+    
+    if balance_due <= 0:
+        payment_status = "Paid"
+    elif total_paid > 0:
+        payment_status = "Partial"
+    else:
+        payment_status = "Unpaid"
+
     booking = {
         "booking_id": booking_id,
         "patient_name": data["name"],
         "mobile": data["mobile"],
         "center_id": data["center_id"],
         "test_id": data["test_id"],
-        "price": data["price"],
+        "price": price,
         "status": "Pending",
         "created_at": current_time,
         "booked_by": booked_by,
+        
+        # Payment Breakdown
+        "agent_collected": agent_collected,
+        "center_collected": center_collected,
         "payment_status": payment_status,
-        # If paid during booking (by Agent), record who and when
-        "payment_updated_by": booked_by if payment_status == "Paid" else None,
-        "payment_updated_at": current_time if payment_status == "Paid" else None
+        "payment_updated_by": booked_by if total_paid > 0 else None,
+        "payment_updated_at": current_time if total_paid > 0 else None
     }
 
     bookings_col.insert_one(booking)
-
     return {"booking_id": booking_id}
+
+
+# ---------------- UPDATE PAYMENT DETAILS (New Generic) ----------------
+@app.post("/update_payment_details")
+def update_payment_details(data: dict):
+    booking_id = data.get("booking_id")
+    booking = bookings_col.find_one({"booking_id": booking_id})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    price = float(booking.get("price", 0))
+    
+    # Update provided fields only
+    agent_collected = float(data.get("agent_collected", booking.get("agent_collected", 0)))
+    center_collected = float(data.get("center_collected", booking.get("center_collected", 0)))
+
+    total_paid = agent_collected + center_collected
+    balance_due = price - total_paid
+    
+    if balance_due <= 0:
+        new_status = "Paid"
+    elif total_paid > 0:
+        new_status = "Partial"
+    else:
+        new_status = "Unpaid"
+
+    updated_by = data.get("updated_by_name", "Admin")
+
+    bookings_col.update_one(
+        {"booking_id": booking_id},
+        {"$set": {
+            "agent_collected": agent_collected,
+            "center_collected": center_collected,
+            "payment_status": new_status,
+            "payment_updated_by": updated_by,
+            "payment_updated_at": int(time.time())
+        }}
+    )
+    return {"status": "updated", "payment_status": new_status}
+
+
+# ---------------- ADMIN STATS (CENTER WISE) ----------------
+@app.get("/admin/center_stats")
+def get_center_stats():
+    pipeline = [
+        {
+            "$group": {
+                "_id": "$center_id",
+                "total_bookings": {"$sum": 1},
+                "total_revenue": {"$sum": "$price"},
+                "paid_count": {
+                    "$sum": { "$cond": [ {"$eq": ["$payment_status", "Paid"]}, 1, 0 ] }
+                },
+                "unpaid_count": {
+                    "$sum": { "$cond": [ {"$eq": ["$payment_status", "Unpaid"]}, 1, 0 ] }
+                },
+                "partial_count": {
+                    "$sum": { "$cond": [ {"$eq": ["$payment_status", "Partial"]}, 1, 0 ] }
+                },
+                # Use $ifNull to handle old documents without these fields
+                "total_agent_collected": {"$sum": { "$ifNull": ["$agent_collected", 0] }},
+                "total_center_collected": {"$sum": { "$ifNull": ["$center_collected", 0] }}
+            }
+        }
+    ]
+    
+    stats = list(bookings_col.aggregate(pipeline))
+    result = []
+    
+    for s in stats:
+        # Resolve Center Name
+        c_id = s["_id"]
+        center = None
+        if isinstance(c_id, int) or (isinstance(c_id, str) and c_id.isdigit()):
+            center = centers_col.find_one({"id": int(c_id)})
+        
+        c_name = center["center_name"] if center else f"ID: {c_id}"
+
+        result.append({
+            "center_name": c_name,
+            "total_bookings": s["total_bookings"],
+            "total_revenue": s["total_revenue"],
+            "paid_count": s["paid_count"],
+            "unpaid_count": s["unpaid_count"] + s["partial_count"], 
+            "agent_collected": s.get("total_agent_collected", 0),
+            "center_collected": s.get("total_center_collected", 0),
+            "total_due": s["total_revenue"] - (s.get("total_agent_collected", 0) + s.get("total_center_collected", 0))
+        })
+    
+    return result
 
 # ---------------- BOOKING HISTORY (NEW) ----------------
 @app.get("/bookings_by_mobile")
@@ -158,7 +277,10 @@ def bookings_by_mobile(mobile: str):
             "center_name": center["center_name"] if center else "",
             "price": b["price"],
             "status": b["status"],
-            "date": b["created_at"]
+            "date": b["created_at"],
+            "payment_status": b.get("payment_status", "Unpaid"),
+            "agent_collected": b.get("agent_collected", 0),
+            "center_collected": b.get("center_collected", 0)
         })
 
     return result
@@ -269,7 +391,9 @@ def center_bookings(center_id: int):
             "created_at": b.get("created_at"),
             "booked_by": b.get("booked_by", "Customer"),
             "payment_status": b.get("payment_status", "Unpaid"),
-            "payment_updated_by": b.get("payment_updated_by")
+            "payment_updated_by": b.get("payment_updated_by"),
+            "agent_collected": b.get("agent_collected", 0),
+            "center_collected": b.get("center_collected", 0)
         })
 
     return result
@@ -297,7 +421,9 @@ def agent_bookings(agent_name: str):
             "status": b.get("status"),
             "created_at": b.get("created_at"),
             "payment_status": b.get("payment_status", "Unpaid"),
-            "payment_updated_by": b.get("payment_updated_by")
+            "payment_updated_by": b.get("payment_updated_by"),
+            "agent_collected": b.get("agent_collected", 0),
+            "center_collected": b.get("center_collected", 0)
         })
 
     return result
@@ -471,6 +597,8 @@ def admin_all_bookings():
             "payment_status": b.get("payment_status", "Unpaid"),
             "payment_updated_by": b.get("payment_updated_by"),
             "payment_updated_at": b.get("payment_updated_at"),
+            "agent_collected": b.get("agent_collected", 0),
+            "center_collected": b.get("center_collected", 0)
         })
 
     return result

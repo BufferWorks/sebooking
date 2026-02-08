@@ -28,6 +28,7 @@ class ApiService {
     required int testId,
     required double price,
     String paymentStatus = "Unpaid",
+    double paidAmount = 0.0,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final isAgent = prefs.getBool('agent_logged_in') ?? false;
@@ -43,7 +44,8 @@ class ApiService {
         "test_id": testId,
         "price": price,
         "booked_by": isAgent ? agentName : "Customer",
-        "payment_status": isAgent ? paymentStatus : "Unpaid", 
+        "payment_status": isAgent ? paymentStatus : "Unpaid",
+        "paid_amount": isAgent ? paidAmount : 0.0,
       }),
     );
 
@@ -53,6 +55,31 @@ class ApiService {
   static Future<List> getHistory(String mobile) async {
     final res = await http.get(
       Uri.parse('$baseUrl/bookings_by_mobile?mobile=$mobile'),
+    );
+    return json.decode(res.body);
+  }
+
+  static Future<void> updatePaymentDetails({
+    required String bookingId,
+    required double agentCollected,
+    required double centerCollected,
+    required String updatedByName,
+  }) async {
+    await http.post(
+      Uri.parse('$baseUrl/update_payment_details'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        "booking_id": bookingId,
+        "agent_collected": agentCollected,
+        "center_collected": centerCollected,
+        "updated_by_name": updatedByName,
+      }),
+    );
+  }
+
+  static Future<List> getCenterStats() async {
+    final res = await http.get(
+      Uri.parse('$baseUrl/admin/center_stats'),
     );
     return json.decode(res.body);
   }

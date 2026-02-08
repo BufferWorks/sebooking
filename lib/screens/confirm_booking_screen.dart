@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 class ConfirmBookingScreen extends StatefulWidget {
   final int testId;
   final String testName;
@@ -29,6 +31,28 @@ class ConfirmBookingScreen extends StatefulWidget {
 
 class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
   bool loading = false;
+  bool isAgent = false;
+  final _amountController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAgent();
+    if (widget.paymentStatus == 'Paid') {
+      _amountController.text = widget.price.toStringAsFixed(0);
+    } else {
+      _amountController.text = "0";
+    }
+  }
+
+  Future<void> _checkAgent() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        isAgent = prefs.getBool('agent_logged_in') ?? false;
+      });
+    }
+  }
 
   Future<void> book() async {
     setState(() => loading = true);
@@ -40,6 +64,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
       testId: widget.testId,
       price: widget.price,
       paymentStatus: widget.paymentStatus,
+      paidAmount: double.tryParse(_amountController.text) ?? 0.0,
     );
 
     if (!mounted) return;
@@ -133,6 +158,22 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                 ),
               ),
             ),
+            
+            if (isAgent) ...[
+                const SizedBox(height: 16),
+                const Text("Payment Collection", style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Amount Collected (₹)',
+                    helperText: 'Enter amount collecting now',
+                    prefixText: '₹ ',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+            ],
 
             const Spacer(),
 
