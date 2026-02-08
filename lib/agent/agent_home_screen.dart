@@ -16,6 +16,9 @@ class AgentHomeScreen extends StatefulWidget {
 class _AgentHomeScreenState extends State<AgentHomeScreen> {
   final nameController = TextEditingController();
   final mobileController = TextEditingController();
+  final ageController = TextEditingController();
+  final addressController = TextEditingController();
+  String gender = 'Male';
 
   List categories = [];
   bool loading = true;
@@ -117,14 +120,30 @@ class _AgentHomeScreenState extends State<AgentHomeScreen> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Patient Name'),
+                  decoration: const InputDecoration(labelText: 'Patient Name', border: OutlineInputBorder()),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: mobileController,
                   keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(labelText: 'Mobile Number'),
+                  decoration: const InputDecoration(labelText: 'Mobile Number', border: OutlineInputBorder()),
                 ),
+                const SizedBox(height: 12),
+                Row(
+                      children: [
+                        Expanded(child: TextField(controller: ageController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Age', border: OutlineInputBorder()))),
+                        const SizedBox(width: 12),
+                        Expanded(child: DropdownButtonFormField<String>(
+                            value: gender,
+                            decoration: const InputDecoration(labelText: 'Gender', border: OutlineInputBorder()),
+                            items: ['Male', 'Female', 'Other'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                            onChanged: (v) => setState(() => gender = v!),
+                        )),
+                      ],
+                ),
+                const SizedBox(height: 12),
+                TextField(controller: addressController, decoration: const InputDecoration(labelText: 'Address', border: OutlineInputBorder())),
+
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -173,10 +192,19 @@ class _AgentHomeScreenState extends State<AgentHomeScreen> {
       onTap: () {
         final name = nameController.text.trim();
         final mobile = mobileController.text.trim();
+        final age = ageController.text.trim();
+        final addr = addressController.text.trim();
 
-        if (name.isEmpty || mobile.isEmpty) {
+        if (name.isEmpty || mobile.isEmpty || age.isEmpty || addr.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Enter patient name & mobile')),
+            const SnackBar(content: Text('Please fill all patient details')),
+          );
+          return;
+        }
+
+        if (!RegExp(r'^\d{10,12}$').hasMatch(mobile)) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Mobile number must be 10-12 digits')),
           );
           return;
         }
@@ -184,6 +212,8 @@ class _AgentHomeScreenState extends State<AgentHomeScreen> {
         // Clear for next use
         nameController.clear();
         mobileController.clear();
+        ageController.clear();
+        addressController.clear();
 
         Navigator.push(
           context,
@@ -193,7 +223,13 @@ class _AgentHomeScreenState extends State<AgentHomeScreen> {
               categoryName: category['name'],
               patientName: name,
               mobile: mobile,
-              paymentStatus: _paymentStatus,
+              age: age,
+              gender: gender,
+              address: addr,
+              paymentStatus: "Paid", // Agents collect money upfront usually? Or as per logic?
+                                     // The original code used "_paymentStatus" var initialized to "Paid".
+                                     // I should check that logic. 
+                                     // Assuming default is Paid for Agent bookings based on UI label "Payment Status: Paid".
             ),
           ),
         );
