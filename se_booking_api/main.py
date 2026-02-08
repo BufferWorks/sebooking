@@ -128,7 +128,11 @@ def add_booking(data: dict):
     total_paid = agent_collected + center_collected
     balance_due = price - total_paid
     
-    if balance_due <= 0:
+    input_status = data.get("payment_status", "Unpaid")
+    
+    if "Pending" in input_status:
+        payment_status = input_status
+    elif balance_due <= 0:
         payment_status = "Paid"
     elif total_paid > 0:
         payment_status = "Partial"

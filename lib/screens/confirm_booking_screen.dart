@@ -32,8 +32,9 @@ class ConfirmBookingScreen extends StatefulWidget {
 class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
   bool loading = false;
   bool isAgent = false;
-  bool _userPaid = false; // For direct user payment check
+  bool _userPaid = false; 
   final _amountController = TextEditingController();
+  final _txnController = TextEditingController();
 
   @override
   void initState() {
@@ -67,10 +68,10 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
       centerId: widget.centerId,
       testId: widget.testId,
       price: widget.price,
-      paymentStatus: isAgent ? widget.paymentStatus : "Paid",
+      paymentStatus: isAgent ? widget.paymentStatus : "Pending Verification (Txn: ${_txnController.text})",
       paidAmount: isAgent 
           ? (double.tryParse(_amountController.text) ?? 0.0) 
-          : widget.price,
+          : widget.price, // User "claims" full payment
     );
 
     if (!mounted) return;
@@ -196,7 +197,6 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                     filled: true,
                   ),
                 ),
-            ] else ...[
                  // USER QR PAYMENT
                  const SizedBox(height: 24),
                  const Center(child: Text("Scan & Pay via UPI", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
@@ -220,17 +220,20 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                    ),
                  ),
                  const SizedBox(height: 16),
-                 CheckboxListTile(
-                   contentPadding: EdgeInsets.zero,
-                   title: Text("I have scanned and paid ₹${widget.price.toStringAsFixed(0)}"),
-                   value: _userPaid,
-                   onChanged: (val) {
-                     setState(() {
-                       _userPaid = val ?? false;
-                     });
-                   },
-                   controlAffinity: ListTileControlAffinity.leading,
+                 TextField(
+                    controller: _txnController,
+                    decoration: const InputDecoration(
+                      labelText: "Enter UPI Transaction ID / Ref No",
+                      hintText: "e.g. 3214xxxxxxx",
+                      border: OutlineInputBorder(),
+                      helperText: "Required for payment verification",
+                    ),
+                    onChanged: (val) {
+                      setState(() {});
+                    },
                  ),
+                 const SizedBox(height: 8),
+                 const Text("Your booking will be 'Pending Verification' until approved.", style: TextStyle(color: Colors.orange, fontSize: 12)),
             ],
 
             const Spacer(),
@@ -238,7 +241,9 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: loading || (!isAgent && !_userPaid) ? null : book,
+                // Agent: standard loading check
+                // User: must enter Txn ID
+                onPressed: loading || (!isAgent && _txnController.text.length < 4) ? null : book,
                 child: loading
                     ? const SizedBox(
                   height: 22,
