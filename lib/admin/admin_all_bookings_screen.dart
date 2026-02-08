@@ -115,6 +115,8 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
         applyFilters();
       });
     }
+  }
+
   Future<void> _verifyPayment(Map b) async {
     final price = double.tryParse(b['price'].toString()) ?? 0;
     
