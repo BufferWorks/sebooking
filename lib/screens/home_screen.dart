@@ -22,6 +22,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final nameController = TextEditingController();
   final mobileController = TextEditingController();
+  final ageController = TextEditingController(); // NEW
+  final addressController = TextEditingController(); // NEW
+  String gender = 'Male'; // NEW
 
   List categories = [];
   bool loading = true;
@@ -86,6 +89,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     nameController.dispose();
     mobileController.dispose();
+    ageController.dispose(); // NEW
+    addressController.dispose(); // NEW
     super.dispose();
   }
 
@@ -355,17 +360,29 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: () {
         final name = nameController.text.trim();
         final mobile = mobileController.text.trim();
+        final age = ageController.text.trim();
+        final addr = addressController.text.trim();
 
-        if (name.isEmpty || mobile.isEmpty) {
+        if (name.isEmpty || mobile.isEmpty || age.isEmpty || addr.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Enter name & mobile')),
+            const SnackBar(content: Text('Please fill all patient details')),
+          );
+          return;
+        }
+        
+        if (!RegExp(r'^\d{10,12}$').hasMatch(mobile)) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Mobile number must be 10-12 digits')),
           );
           return;
         }
 
-        // Clear fields AFTER validation
+        // Clear fields 
         nameController.clear();
         mobileController.clear();
+        ageController.clear();
+        addressController.clear();
+        // Reset gender if needed, or keep default
 
         Navigator.push(
           context,
@@ -375,6 +392,9 @@ class _HomeScreenState extends State<HomeScreen> {
               categoryName: category['name'],
               patientName: name,
               mobile: mobile,
+              age: age,
+              gender: gender,
+              address: addr,
             ),
           ),
         );
