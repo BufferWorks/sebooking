@@ -10,6 +10,9 @@ class TestCategoryScreen extends StatefulWidget {
   final String categoryName;
   final String patientName;
   final String mobile;
+  final String age;
+  final String gender;
+  final String address;
   final String paymentStatus;
 
   const TestCategoryScreen({
@@ -18,6 +21,9 @@ class TestCategoryScreen extends StatefulWidget {
     required this.categoryName,
     required this.patientName,
     required this.mobile,
+    required this.age,
+    required this.gender,
+    required this.address,
     this.paymentStatus = "Unpaid",
   });
 
@@ -142,15 +148,16 @@ class _TestCategoryScreenState extends State<TestCategoryScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              CenterSelectionScreen(
-                                testId: t['id'],
-                                testName: t['test_name'],
-                                patientName:
-                                widget.patientName,
-                                mobile: widget.mobile,
-                                paymentStatus: widget.paymentStatus,
-                              ),
+                          builder: (_) => CenterSelectionScreen(
+                            testId: t['id'],
+                            testName: t['test_name'],
+                            patientName: widget.patientName,
+                            mobile: widget.mobile,
+                            age: widget.age,
+                            gender: widget.gender,
+                            address: widget.address,
+                            paymentStatus: widget.paymentStatus,
+                          ),
                         ),
                       );
                     },
