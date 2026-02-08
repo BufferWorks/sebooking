@@ -307,75 +307,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
               ),
             ),
             
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                       const Text("Agent Collection Required", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
-                       const SizedBox(height: 4),
-                       Text("You must collect the full amount of ₹${widget.price.toStringAsFixed(0)} from the patient.", style: const TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _amountController,
-                  keyboardType: TextInputType.number,
-                  readOnly: true, // Enforce full payment
-                  decoration: const InputDecoration(
-                    labelText: 'Amount Collected (₹)',
-                    prefixText: '₹ ',
-                    border: OutlineInputBorder(),
-                    fillColor: Colors.white,
-                    filled: true,
-                  ),
-                ),
-            ] else ...[
-                 // USER QR PAYMENT
-                 const SizedBox(height: 24),
-                 const Center(child: Text("Scan & Pay via UPI", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
-                 const SizedBox(height: 12),
-                 Center(
-                   child: Container(
-                     padding: const EdgeInsets.all(8),
-                     decoration: BoxDecoration(border: Border.all(color: Colors.grey)),
-                     child: Image.network(
-                       "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi%3A%2F%2Fpay%3Fpa%3D9669002008%40ybl%26pn%3DSeBooking%26am%3D${widget.price}%26tn%3DBooking",
-                       height: 150,
-                       width: 150,
-                       loadingBuilder: (context, child, loadingProgress) {
-                         if (loadingProgress == null) return child;
-                         return const SizedBox(height: 150, width: 150, child: Center(child: CircularProgressIndicator()));
-                       },
-                       errorBuilder: (context, error, stackTrace) {
-                         return const SizedBox(height: 150, width: 150, child: Center(child: Icon(Icons.error)));
-                       },
-                     ),
-                   ),
-                 ),
-                 const SizedBox(height: 16),
-                 TextField(
-                    controller: _txnController,
-                    decoration: const InputDecoration(
-                      labelText: "Enter UPI Transaction ID / Ref No",
-                      hintText: "e.g. 3214xxxxxxx",
-                      border: OutlineInputBorder(),
-                      helperText: "Required for payment verification",
-                    ),
-                    onChanged: (val) {
-                      setState(() {});
-                    },
-                 ),
-                 const SizedBox(height: 8),
-                 const Text("Your booking will be 'Pending Verification' until approved.", style: TextStyle(color: Colors.orange, fontSize: 12)),
-            ],
+
 
             const Spacer(),
 
