@@ -119,9 +119,12 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
 
             const SizedBox(height: 12),
 
-            const Text(
-              'Please show this receipt at the center\nand pay the amount there.',
+            Text(
+              (!isAgent && _txnController.text.isNotEmpty)
+                  ? 'Payment verification pending.\nPlease show this Booking ID at the center.'
+                  : 'Please show this receipt at the center.',
               textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14),
             ),
           ],
         ),
