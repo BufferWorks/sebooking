@@ -280,15 +280,17 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
 
                 for (var b in filteredBookings) {
                   String status = b['payment_status'] ?? 'Unpaid';
-                  String updatedBy = b['payment_updated_by'] ?? '';
+                  
+                  double agentColl = double.tryParse(b['agent_collected'].toString()) ?? 0;
+                  double centerColl = double.tryParse(b['center_collected'].toString()) ?? 0;
+                  double adminColl = double.tryParse(b['admin_collected'].toString()) ?? 0;
 
                   if (status == 'Unpaid') {
                     unpaid++;
                   } else {
-                    if (updatedBy == 'Center') {
+                    if (centerColl > 0 || adminColl > 0) {
                       paidByCenter++;
                     } else {
-                      // If updated_by is missing but paid, assume Agent/Booker
                       paidByAgent++;
                     }
                   }
@@ -301,7 +303,7 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
                     children: [
                       _summaryCard('Total', '$total', Colors.blue),
                       _summaryCard('Paid (Agent)', '$paidByAgent', Colors.purple),
-                      _summaryCard('Paid (Center)', '$paidByCenter', Colors.green),
+                      _summaryCard('Paid (Center/Online)', '$paidByCenter', Colors.green),
                       _summaryCard('Unpaid', '$unpaid', Colors.orange),
                     ],
                   ),
