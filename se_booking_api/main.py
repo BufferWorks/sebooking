@@ -163,6 +163,7 @@ def add_booking(data: dict):
 
 
 # ---------------- UPDATE PAYMENT DETAILS (New Generic) ----------------
+# ---------------- UPDATE PAYMENT DETAILS (New Generic) ----------------
 @app.post("/update_payment_details")
 def update_payment_details(data: dict):
     booking_id = data.get("booking_id")
@@ -175,8 +176,9 @@ def update_payment_details(data: dict):
     # Update provided fields only
     agent_collected = float(data.get("agent_collected", booking.get("agent_collected", 0)))
     center_collected = float(data.get("center_collected", booking.get("center_collected", 0)))
+    admin_collected = float(data.get("admin_collected", booking.get("admin_collected", 0)))
 
-    total_paid = agent_collected + center_collected
+    total_paid = agent_collected + center_collected + admin_collected
     balance_due = price - total_paid
     
     if balance_due <= 0:
@@ -193,6 +195,7 @@ def update_payment_details(data: dict):
         {"$set": {
             "agent_collected": agent_collected,
             "center_collected": center_collected,
+            "admin_collected": admin_collected,
             "payment_status": new_status,
             "payment_updated_by": updated_by,
             "payment_updated_at": int(time.time())
@@ -231,7 +234,8 @@ def get_center_stats(start_ts: int = None, end_ts: int = None):
                 },
                 # Use $ifNull to handle old documents without these fields
                 "total_agent_collected": {"$sum": { "$ifNull": ["$agent_collected", 0] }},
-                "total_center_collected": {"$sum": { "$ifNull": ["$center_collected", 0] }}
+                "total_center_collected": {"$sum": { "$ifNull": ["$center_collected", 0] }},
+                "total_admin_collected": {"$sum": { "$ifNull": ["$admin_collected", 0] }}
             }
     })
     
@@ -246,6 +250,10 @@ def get_center_stats(start_ts: int = None, end_ts: int = None):
             center = centers_col.find_one({"id": int(c_id)})
         
         c_name = center["center_name"] if center else f"ID: {c_id}"
+        
+        total_collected = (s.get("total_agent_collected", 0) + 
+                           s.get("total_center_collected", 0) + 
+                           s.get("total_admin_collected", 0))
 
         result.append({
             "center_name": c_name,
@@ -255,7 +263,8 @@ def get_center_stats(start_ts: int = None, end_ts: int = None):
             "unpaid_count": s["unpaid_count"] + s["partial_count"], 
             "agent_collected": s.get("total_agent_collected", 0),
             "center_collected": s.get("total_center_collected", 0),
-            "total_due": s["total_revenue"] - (s.get("total_agent_collected", 0) + s.get("total_center_collected", 0))
+            "admin_collected": s.get("total_admin_collected", 0),
+            "total_due": s["total_revenue"] - total_collected
         })
     
     return result
@@ -611,7 +620,9 @@ def admin_all_bookings():
             "payment_updated_by": b.get("payment_updated_by"),
             "payment_updated_at": b.get("payment_updated_at"),
             "agent_collected": b.get("agent_collected", 0),
-            "center_collected": b.get("center_collected", 0)
+            "center_collected": b.get("center_collected", 0),
+            "admin_collected": b.get("admin_collected", 0),
+            "price": b.get("price", 0)
         })
 
     return result
