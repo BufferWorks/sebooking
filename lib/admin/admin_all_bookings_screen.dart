@@ -128,7 +128,7 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
           mainAxisSize: MainAxisSize.min, 
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-             const Text('Has the full amount been received in the company account?'),
+             const Text('Has the full amount been received in the company account (Admin)?'),
              const SizedBox(height: 12),
              Text('Tracking ID / Status:\n${b['payment_status']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blueGrey)),
              const SizedBox(height: 12),
@@ -140,11 +140,12 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
             onPressed: () async {
-              // Mark as collected by Center (Company Account)
+              // Mark as collected by Admin (Company Account)
               await ApiService.updatePaymentDetails(
                   bookingId: b['booking_id'],
                   agentCollected: 0.0,
-                  centerCollected: price,
+                  centerCollected: 0.0,
+                  adminCollected: price,
                   updatedByName: "Admin (Verified Online)",
               );
               if (mounted) Navigator.pop(ctx);
@@ -386,7 +387,8 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
                                 final price = double.tryParse(b['price'].toString()) ?? 0;
                                 final agentColl = double.tryParse(b['agent_collected'].toString()) ?? 0;
                                 final centerColl = double.tryParse(b['center_collected'].toString()) ?? 0;
-                                final totalPaid = agentColl + centerColl;
+                                final adminColl = double.tryParse(b['admin_collected'].toString()) ?? 0;
+                                final totalPaid = agentColl + centerColl + adminColl;
                                 final due = price - totalPaid;
                                 final payStatus = b['payment_status'] ?? 'Unpaid';
                                 final isPending = payStatus.toString().contains('Pending');
@@ -402,7 +404,6 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
                                   child: Column(
                                     children: [
                                       _infoRow('Booked By', b['booked_by'] ?? 'Customer'),
-                                      const Divider(height: 12),
                                       
                                       if (isPending) ...[
                                          Container(
@@ -436,6 +437,7 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
                                            ),
                                          ),
                                       ] else ...[
+                                          const Divider(height: 12),
                                           _infoRow('Price', '₹${price.toStringAsFixed(0)}'),
                                           const SizedBox(height: 4),
                                           Row(
@@ -443,8 +445,8 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
                                             children: [
                                               const Text('Paid', style: TextStyle(color: Colors.green, fontSize: 13)),
                                               Text(
-                                                '₹${totalPaid.toStringAsFixed(0)} (Ag: ${agentColl.toInt()} | Ctr: ${centerColl.toInt()})',
-                                                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 13),
+                                                '₹${totalPaid.toStringAsFixed(0)} (Ag: ${agentColl.toInt()} | Ctr: ${centerColl.toInt()} | Adm: ${adminColl.toInt()})',
+                                                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 12),
                                               ),
                                             ],
                                           ),
@@ -526,9 +528,11 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
     final price = double.tryParse(b['price'].toString()) ?? 0;
     final agentColl = double.tryParse(b['agent_collected'].toString()) ?? 0;
     final centerColl = double.tryParse(b['center_collected'].toString()) ?? 0;
+    final adminColl = double.tryParse(b['admin_collected'].toString()) ?? 0;
 
     final agentController = TextEditingController(text: agentColl.toStringAsFixed(0));
     final centerController = TextEditingController(text: centerColl.toStringAsFixed(0));
+    final adminController = TextEditingController(text: adminColl.toStringAsFixed(0));
 
     await showDialog(
       context: context,
@@ -563,6 +567,17 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
                     border: OutlineInputBorder(),
                   ),
                 ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: adminController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Admin/Online Collection',
+                     helperText: 'Collected by Company',
+                    prefixText: '₹ ',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
               ],
             ),
           ),
@@ -575,11 +590,13 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
               onPressed: () async {
                 final ac = double.tryParse(agentController.text) ?? 0;
                 final cc = double.tryParse(centerController.text) ?? 0;
+                final admc = double.tryParse(adminController.text) ?? 0;
 
                 await ApiService.updatePaymentDetails(
                   bookingId: b['booking_id'],
                   agentCollected: ac,
                   centerCollected: cc,
+                  adminCollected: admc,
                   updatedByName: "Admin",
                 );
                 if (mounted) Navigator.pop(ctx);

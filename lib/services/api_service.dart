@@ -63,6 +63,7 @@ class ApiService {
     required String bookingId,
     required double agentCollected,
     required double centerCollected,
+    double adminCollected = 0.0,
     required String updatedByName,
   }) async {
     await http.post(
@@ -72,6 +73,7 @@ class ApiService {
         "booking_id": bookingId,
         "agent_collected": agentCollected,
         "center_collected": centerCollected,
+        "admin_collected": adminCollected,
         "updated_by_name": updatedByName,
       }),
     );
