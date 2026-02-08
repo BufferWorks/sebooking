@@ -50,6 +50,9 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
     if (mounted) {
       setState(() {
         isAgent = prefs.getBool('agent_logged_in') ?? false;
+        if (isAgent) {
+          _amountController.text = widget.price.toStringAsFixed(0);
+        }
       });
     }
   }
@@ -161,16 +164,33 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
             
             if (isAgent) ...[
                 const SizedBox(height: 16),
-                const Text("Payment Collection", style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                       const Text("Agent Collection Required", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+                       const SizedBox(height: 4),
+                       Text("You must collect the full amount of ₹${widget.price.toStringAsFixed(0)} from the patient.", style: const TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: _amountController,
                   keyboardType: TextInputType.number,
+                  readOnly: true, // Enforce full payment
                   decoration: const InputDecoration(
                     labelText: 'Amount Collected (₹)',
-                    helperText: 'Enter amount collecting now',
                     prefixText: '₹ ',
                     border: OutlineInputBorder(),
+                    fillColor: Colors.white,
+                    filled: true,
                   ),
                 ),
             ],

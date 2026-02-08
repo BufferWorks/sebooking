@@ -21,7 +21,7 @@ class _AgentHomeScreenState extends State<AgentHomeScreen> {
   bool loading = true;
   String? errorMessage;
   String agentName = "";
-  String _paymentStatus = "Unpaid";
+  String _paymentStatus = "Paid";
 
   @override
   void initState() {
@@ -126,33 +126,20 @@ class _AgentHomeScreenState extends State<AgentHomeScreen> {
                   decoration: const InputDecoration(labelText: 'Mobile Number'),
                 ),
                 const SizedBox(height: 16),
-                const Text('Payment Status for Booking:',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                Row(
-                  children: [
-                    Expanded(
-                      child: RadioListTile(
-                        title: const Text('Unpaid'),
-                        value: 'Unpaid',
-                        groupValue: _paymentStatus,
-                        onChanged: (val) =>
-                            setState(() => _paymentStatus = val.toString()),
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                    Expanded(
-                      child: RadioListTile(
-                        title: const Text('Paid'),
-                        value: 'Paid',
-                        groupValue: _paymentStatus,
-                        onChanged: (val) =>
-                            setState(() => _paymentStatus = val.toString()),
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                  ],
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.green),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.check_circle, color: Colors.green),
+                      SizedBox(width: 8),
+                      Text("Payment Status: Paid", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 24),
                 const Text(

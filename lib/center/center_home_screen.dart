@@ -116,84 +116,7 @@ class _CenterHomeScreenState extends State<CenterHomeScreen> {
     loadBookings();
   }
 
-  Future<void> _openPaymentDialog(Map b) async {
-    final price = double.tryParse(b['price'].toString()) ?? 0;
-    final agentColl = double.tryParse(b['agent_collected'].toString()) ?? 0;
-    final centerColl = double.tryParse(b['center_collected'].toString()) ?? 0;
 
-    final agentController = TextEditingController(text: agentColl.toStringAsFixed(0));
-    final centerController = TextEditingController(text: centerColl.toStringAsFixed(0));
-
-    await showDialog(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text('Update Payment Details'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _infoRow('Total Price', '₹${price.toStringAsFixed(0)}'),
-                const Divider(),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: agentController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Agent Collection',
-                    prefixText: '₹ ',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: centerController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Center Collection',
-                    prefixText: '₹ ',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final ac = double.tryParse(agentController.text) ?? 0;
-                final cc = double.tryParse(centerController.text) ?? 0;
-
-                await ApiService.updatePaymentDetails(
-                  bookingId: b['booking_id'],
-                  agentCollected: ac,
-                  centerCollected: cc,
-                  updatedByName: widget.centerName,
-                );
-                if (mounted) Navigator.pop(ctx);
-                loadBookings();
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _infoRow(String k, String v) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [Text(k), Text(v, style: const TextStyle(fontWeight: FontWeight.bold))],
-      ),
-    );
-  }
 
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
@@ -347,64 +270,20 @@ class _CenterHomeScreenState extends State<CenterHomeScreen> {
 
                         const SizedBox(height: 8),
 
-                        // Payment Breakdown
-                        Builder(
-                          builder: (context) {
-                            final price = double.tryParse(b['price'].toString()) ?? 0;
-                            final agentColl = double.tryParse(b['agent_collected'].toString()) ?? 0;
-                            final centerColl = double.tryParse(b['center_collected'].toString()) ?? 0;
-                            final totalPaid = agentColl + centerColl;
-                            final due = price - totalPaid;
-
-                            return Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade50,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.grey.shade200),
-                              ),
-                              child: Column(
-                                children: [
-                                  _infoRow('Price', '₹${price.toStringAsFixed(0)}'),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text('Paid', style: TextStyle(color: Colors.green)),
-                                      Text(
-                                        '₹${totalPaid.toStringAsFixed(0)} (Ag: ${agentColl.toInt()} | Ctr: ${centerColl.toInt()})',
-                                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text('Due', style: TextStyle(color: due > 0 ? Colors.red : Colors.grey)),
-                                      Text(
-                                        '₹${due.toStringAsFixed(0)}',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold, 
-                                          color: due > 0 ? Colors.red : Colors.grey,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    height: 32,
-                                    child: OutlinedButton.icon(
-                                      icon: const Icon(Icons.edit, size: 14),
-                                      label: const Text('Update Payment', style: TextStyle(fontSize: 12)),
-                                      onPressed: () => _openPaymentDialog(b),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
+                        // Payment Status (No Amount)
+                        Container(
+                          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: b['payment_status'] == 'Paid' ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                             b['payment_status'] == 'Paid' ? "Payment: Paid" : "Payment: ${b['payment_status']}",
+                             style: TextStyle(
+                               fontWeight: FontWeight.bold,
+                               color: b['payment_status'] == 'Paid' ? Colors.green : Colors.orange,
+                             ),
+                          ),
                         ),
 
                         const SizedBox(height: 12),
