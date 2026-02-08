@@ -251,8 +251,36 @@ class _HomeScreenState extends State<HomeScreen> {
             TextField(
               controller: mobileController,
               keyboardType: TextInputType.phone,
-              decoration:
-              const InputDecoration(labelText: 'Mobile Number'),
+              decoration: const InputDecoration(labelText: 'Mobile Number', border: OutlineInputBorder()),
+            ),
+
+            const SizedBox(height: 12),
+            
+            Row(
+              children: [
+                 Expanded(
+                   child: TextField(
+                     controller: ageController,
+                     keyboardType: TextInputType.number,
+                     decoration: const InputDecoration(labelText: 'Age', border: OutlineInputBorder()),
+                   ),
+                 ),
+                 const SizedBox(width: 12),
+                 Expanded(
+                   child: DropdownButtonFormField<String>(
+                     value: gender,
+                     decoration: const InputDecoration(labelText: 'Gender', border: OutlineInputBorder()),
+                     items: ['Male', 'Female', 'Other'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                     onChanged: (v) => setState(() => gender = v!),
+                   ),
+                 ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            
+            TextField(
+              controller: addressController,
+              decoration: const InputDecoration(labelText: 'Address', border: OutlineInputBorder()),
             ),
 
             const SizedBox(height: 24),
