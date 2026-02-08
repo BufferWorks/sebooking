@@ -11,6 +11,9 @@ class CenterSelectionScreen extends StatefulWidget {
   final String testName;
   final String patientName;
   final String mobile;
+  final String age;
+  final String gender;
+  final String address;
   final String paymentStatus;
 
   const CenterSelectionScreen({
@@ -19,6 +22,9 @@ class CenterSelectionScreen extends StatefulWidget {
     required this.testName,
     required this.patientName,
     required this.mobile,
+    required this.age,
+    required this.gender,
+    required this.address,
     this.paymentStatus = "Unpaid",
   });
 
@@ -173,9 +179,11 @@ class _CenterSelectionScreenState extends State<CenterSelectionScreen> {
                       centerName: c['center_name'],
                       price: double.parse(
                           c['price'].toString()),
-                      patientName:
-                      widget.patientName,
+                      patientName: widget.patientName,
                       mobile: widget.mobile,
+                      age: widget.age,
+                      gender: widget.gender,
+                      address: widget.address,
                       paymentStatus: widget.paymentStatus,
                     ),
                   ),
