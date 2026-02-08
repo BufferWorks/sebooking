@@ -304,7 +304,7 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
                     children: [
                       _summaryCard('Total', '$total', Colors.blue),
                       _summaryCard('Paid (Agent)', '$paidByAgent', Colors.purple),
-                      _summaryCard('Paid (Center/Online)', '$paidByCenter', Colors.green),
+                      _summaryCard('Paid (Admin/Online)', '$paidByCenter', Colors.green),
                       _summaryCard('Unpaid', '$unpaid', Colors.orange),
                     ],
                   ),
@@ -382,8 +382,22 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
                           style: const TextStyle(
                               fontSize: 12, color: Colors.grey),
                         ),
-
                         const SizedBox(height: 8),
+                        // 🆕 New Patient Details
+                        if (b['age'] != null || b['address'] != null) ...[
+                          Text(
+                            '${b['age'] ?? 'N/A'} Yrs | ${b['gender'] ?? 'N/A'}',
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87),
+                          ),
+                          const SizedBox(height: 2),
+                           Text(
+                            '${b['address'] ?? 'No Address'}',
+                             style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                             maxLines: 2, 
+                             overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 8),
+                        ],
                                                       // 🆕 Booked By & Payment Details
                             Builder(
                               builder: (context) {
