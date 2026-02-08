@@ -199,9 +199,19 @@ def update_payment_details(data: dict):
 
 # ---------------- ADMIN STATS (CENTER WISE) ----------------
 @app.get("/admin/center_stats")
-def get_center_stats():
-    pipeline = [
-        {
+def get_center_stats(start_ts: int = None, end_ts: int = None):
+    pipeline = []
+    
+    # 1. Match Stage (Filter by Date if provided)
+    if start_ts is not None and end_ts is not None:
+        pipeline.append({
+            "$match": {
+                "created_at": {"$gte": start_ts, "$lte": end_ts}
+            }
+        })
+
+    # 2. Group Stage
+    pipeline.append({
             "$group": {
                 "_id": "$center_id",
                 "total_bookings": {"$sum": 1},
@@ -219,8 +229,7 @@ def get_center_stats():
                 "total_agent_collected": {"$sum": { "$ifNull": ["$agent_collected", 0] }},
                 "total_center_collected": {"$sum": { "$ifNull": ["$center_collected", 0] }}
             }
-        }
-    ]
+    })
     
     stats = list(bookings_col.aggregate(pipeline))
     result = []

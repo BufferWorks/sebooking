@@ -77,10 +77,13 @@ class ApiService {
     );
   }
 
-  static Future<List> getCenterStats() async {
-    final res = await http.get(
-      Uri.parse('$baseUrl/admin/center_stats'),
-    );
+  static Future<List> getCenterStats({int? startTs, int? endTs}) async {
+    String url = '$baseUrl/admin/center_stats';
+    if (startTs != null && endTs != null) {
+      url += '?start_ts=$startTs&end_ts=$endTs';
+    }
+    
+    final res = await http.get(Uri.parse(url));
     return json.decode(res.body);
   }
 }

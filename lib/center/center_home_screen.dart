@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:se_booking/config.dart';
+import '../screens/home_screen.dart';
 import '../services/api_service.dart';
 
 class CenterHomeScreen extends StatefulWidget {
@@ -199,7 +200,7 @@ class _CenterHomeScreenState extends State<CenterHomeScreen> {
     await prefs.clear();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      MaterialPageRoute(builder: (_) => HomeScreen()),
       (route) => false,
     );
   }
