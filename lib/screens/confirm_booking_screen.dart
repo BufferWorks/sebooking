@@ -235,25 +235,13 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                     
                     const SizedBox(height: 24),
                     const SizedBox(height: 24),
+                    const SizedBox(height: 24),
                     const Text("Test Information", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100, 
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Column(
-                        children: [
-                             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text("Test"), Flexible(child: Text(widget.testName, textAlign: TextAlign.end, style: const TextStyle(fontWeight: FontWeight.bold)))]),
-                             const Divider(),
-                             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text("Center"), Flexible(child: Text(widget.centerName, textAlign: TextAlign.end, style: const TextStyle(fontWeight: FontWeight.bold)))]),
-                             const Divider(),
-                             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text("Price"), Text("₹${widget.price.toStringAsFixed(0)}", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green))]),
-                        ],
-                      ),
-                    ),
+                    const Divider(),
+                    Text("Test: ${widget.testName}"),
+                    Text("Center: ${widget.centerName}"),
+                    Text("Price: ₹${widget.price.toStringAsFixed(0)}"),
+                    const Divider(),
                     const SizedBox(height: 16),
 
                     if (isAgent) ...[
