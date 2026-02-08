@@ -285,7 +285,8 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
                   double centerColl = double.tryParse(b['center_collected'].toString()) ?? 0;
                   double adminColl = double.tryParse(b['admin_collected'].toString()) ?? 0;
 
-                  if (status == 'Unpaid') {
+                  // Pending verification counts as Unpaid until verified
+                  if (status == 'Unpaid' || status.contains('Pending')) {
                     unpaid++;
                   } else {
                     if (centerColl > 0 || adminColl > 0) {
