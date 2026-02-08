@@ -32,6 +32,7 @@ class ConfirmBookingScreen extends StatefulWidget {
 class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
   bool loading = false;
   bool isAgent = false;
+  bool _userPaid = false; // For direct user payment check
   final _amountController = TextEditingController();
 
   @override
@@ -66,8 +67,10 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
       centerId: widget.centerId,
       testId: widget.testId,
       price: widget.price,
-      paymentStatus: widget.paymentStatus,
-      paidAmount: double.tryParse(_amountController.text) ?? 0.0,
+      paymentStatus: isAgent ? widget.paymentStatus : "Paid",
+      paidAmount: isAgent 
+          ? (double.tryParse(_amountController.text) ?? 0.0) 
+          : widget.price,
     );
 
     if (!mounted) return;
@@ -193,6 +196,41 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                     filled: true,
                   ),
                 ),
+            ] else ...[
+                 // USER QR PAYMENT
+                 const SizedBox(height: 24),
+                 const Center(child: Text("Scan & Pay via UPI", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+                 const SizedBox(height: 12),
+                 Center(
+                   child: Container(
+                     padding: const EdgeInsets.all(8),
+                     decoration: BoxDecoration(border: Border.all(color: Colors.grey)),
+                     child: Image.network(
+                       "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi%3A%2F%2Fpay%3Fpa%3D9669002008%40ybl%26pn%3DSeBooking%26am%3D${widget.price}%26tn%3DBooking",
+                       height: 150,
+                       width: 150,
+                       loadingBuilder: (context, child, loadingProgress) {
+                         if (loadingProgress == null) return child;
+                         return const SizedBox(height: 150, width: 150, child: Center(child: CircularProgressIndicator()));
+                       },
+                       errorBuilder: (context, error, stackTrace) {
+                         return const SizedBox(height: 150, width: 150, child: Center(child: Icon(Icons.error)));
+                       },
+                     ),
+                   ),
+                 ),
+                 const SizedBox(height: 16),
+                 CheckboxListTile(
+                   contentPadding: EdgeInsets.zero,
+                   title: Text("I have scanned and paid ₹${widget.price.toStringAsFixed(0)}"),
+                   value: _userPaid,
+                   onChanged: (val) {
+                     setState(() {
+                       _userPaid = val ?? false;
+                     });
+                   },
+                   controlAffinity: ListTileControlAffinity.leading,
+                 ),
             ],
 
             const Spacer(),
@@ -200,7 +238,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: loading ? null : book,
+                onPressed: loading || (!isAgent && !_userPaid) ? null : book,
                 child: loading
                     ? const SizedBox(
                   height: 22,

@@ -44,8 +44,8 @@ class ApiService {
         "test_id": testId,
         "price": price,
         "booked_by": isAgent ? agentName : "Customer",
-        "payment_status": isAgent ? paymentStatus : "Unpaid",
-        "paid_amount": isAgent ? paidAmount : 0.0,
+        "payment_status": paymentStatus,
+        "paid_amount": paidAmount,
       }),
     );
 
