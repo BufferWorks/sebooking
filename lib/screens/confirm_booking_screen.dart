@@ -47,6 +47,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
   final _ageController = TextEditingController();
   final _addressController = TextEditingController();
   String _gender = 'Male';
+  int _selectedQrIndex = 0;
 
   @override
   void initState() {
@@ -248,13 +249,33 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
           ] else ...[
              const Center(child: Text("Scan & Pay via UPI", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
              const SizedBox(height: 12),
+             
+             Row(
+               mainAxisAlignment: MainAxisAlignment.center,
+               children: [
+                 ChoiceChip(
+                   label: const Text("BharatPe"),
+                   selected: _selectedQrIndex == 0,
+                   onSelected: (v) => setState(() => _selectedQrIndex = 0),
+                 ),
+                 const SizedBox(width: 12),
+                 ChoiceChip(
+                   label: const Text("Paytm"),
+                   selected: _selectedQrIndex == 1,
+                   onSelected: (v) => setState(() => _selectedQrIndex = 1),
+                 ),
+               ],
+             ),
+             
+             const SizedBox(height: 12),
              Center(
                 child: Container(
                   decoration: BoxDecoration(border: Border.all(color: Colors.grey)),
-                  child: Image.network(
-                    "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi%3A%2F%2Fpay%3Fpa%3D9669002008%40ybl%26pn%3DSeBooking%26am%3D${widget.price}%26tn%3DBooking",
-                    height: 200, width: 200,
-                    errorBuilder: (_,__,___) => const Icon(Icons.broken_image, size: 50),
+                  child: Image.asset(
+                    _selectedQrIndex == 0 ? "assets/qr_codes/bharatpe_qr.jpg" : "assets/qr_codes/paytm_qr.jpg",
+                    height: 300, 
+                    fit: BoxFit.contain,
+                    errorBuilder: (_,__,___) => const SizedBox(height: 200, width: 200, child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.broken_image, size: 50), Text("QR not found")])),
                   ),
                 ),
              ),
