@@ -49,9 +49,10 @@ class _AgentLoginScreenState extends State<AgentLoginScreen> {
 
         if (!mounted) return;
 
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const AgentHomeScreen()),
+          (route) => false,
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

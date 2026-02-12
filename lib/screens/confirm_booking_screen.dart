@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
-
+import '../services/pdf_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ConfirmBookingScreen extends StatefulWidget {
@@ -174,6 +174,29 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
           ],
         ),
         actions: [
+          TextButton(
+            onPressed: () {
+              // Generate PDF
+              final bookingData = {
+                'booking_id': bookingId,
+                'created_at': DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                'patient_name': _nameController.text,
+                'age': _ageController.text,
+                'gender': _gender,
+                'mobile': _mobileController.text,
+                'address': _addressController.text,
+                'test_name': widget.testName,
+                'center_name': widget.centerName,
+                'price': widget.price,
+                'payment_status': isAgent 
+                    ? widget.paymentStatus 
+                    : "Pending Verification (Txn: ${_txnController.text})",
+              };
+              debugPrint("Generating PDF with data: $bookingData");
+              PdfService.generateAndOpenPdf(context, bookingData);
+            },
+            child: const Text('Download Receipt'),
+          ),
           TextButton(
             onPressed: () {
               Navigator.popUntil(context, (r) => r.isFirst);

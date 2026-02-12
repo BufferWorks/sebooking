@@ -108,6 +108,9 @@ def add_booking(data: dict):
         "booking_id": booking_id,
         "patient_name": data["name"],
         "mobile": data["mobile"],
+        "age": data.get("age"),
+        "gender": data.get("gender"),
+        "address": data.get("address"),
         "center_id": data["center_id"],
         "test_id": data["test_id"],
         "price": data["price"],
@@ -136,7 +139,7 @@ def bookings_by_mobile(mobile: str):
 
     bookings = list(bookings_col.find(
         query,
-        {"_id": 0, "mobile": 0}
+        {"_id": 0}  # Return all fields including mobile, age, etc
     ))
 
     result = []
@@ -147,11 +150,16 @@ def bookings_by_mobile(mobile: str):
         result.append({
             "booking_id": b["booking_id"],
             "patient_name": b["patient_name"],
+            "mobile": b.get("mobile"),
+            "age": b.get("age"),
+            "gender": b.get("gender"),
+            "address": b.get("address"),
             "test_name": test["test_name"] if test else "",
             "center_name": center["center_name"] if center else "",
             "price": b["price"],
             "status": b["status"],
-            "date": b["created_at"]
+            "date": b["created_at"],
+            "payment_status": b.get("payment_status", "Unpaid"),
         })
 
     return result

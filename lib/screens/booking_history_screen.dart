@@ -25,6 +25,12 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
 
     setState(() => loading = true);
     history = await ApiService.getHistory(mobileCtrl.text.trim());
+    
+    // Inject mobile number into history items since API doesn't return it
+    for (var item in history) {
+      item['mobile'] = mobileCtrl.text.trim();
+    }
+
     setState(() => loading = false);
   }
 

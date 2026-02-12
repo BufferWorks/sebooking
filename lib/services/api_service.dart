@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
 
 import 'package:se_booking/config.dart';
 
@@ -37,32 +38,112 @@ class ApiService {
     final isAgent = prefs.getBool('agent_logged_in') ?? false;
     final agentName = prefs.getString('agent_name') ?? "Agent";
 
+    final body = {
+      "name": name,
+      "mobile": mobile,
+      "age": age,
+      "gender": gender,
+      "address": address,
+      "center_id": centerId,
+      "test_id": testId,
+      "price": price,
+      "booked_by": isAgent ? agentName : "Customer",
+      "payment_status": paymentStatus,
+      "paid_amount": paidAmount,
+    };
+
     final res = await http.post(
-      Uri.parse('$baseUrl/add_booking'),
+      Uri.parse('${Config.baseUrl}/add_booking'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        "name": name,
-        "mobile": mobile,
-        "age": age,
-        "gender": gender,
-        "address": address,
-        "center_id": centerId,
-        "test_id": testId,
-        "price": price,
-        "booked_by": isAgent ? agentName : "Customer",
-        "payment_status": paymentStatus,
-        "paid_amount": paidAmount,
-      }),
+      body: json.encode(body),
     );
 
-    return json.decode(res.body)["booking_id"];
+    final bookingId = json.decode(res.body)["booking_id"];
+    
+    // Save locally to support receipt details since backend doesn't store age/address
+    await updateLocalBooking(bookingId, body);
+
+    return bookingId;
+  }
+
+  static Future<void> updateLocalBooking(String bookingId, Map data) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final localDataStr = prefs.getString('local_bookings_v1');
+      Map<String, dynamic> localData = {};
+      if (localDataStr != null) {
+        localData = Map<String, dynamic>.from(json.decode(localDataStr));
+      }
+      
+      localData[bookingId] = {
+        'age': data['age'],
+        'gender': data['gender'],
+        'address': data['address'],
+        'mobile': data['mobile'] // Save mobile for redundancy
+      };
+      
+      debugPrint("Saving local booking: $bookingId -> ${localData[bookingId]}");
+      final saved = await prefs.setString('local_bookings_v1', json.encode(localData));
+      if (saved) {
+        debugPrint("Local booking saved successfully.");
+      } else {
+        debugPrint("FAILED to save local booking.");
+      }
+    } catch (e) {
+      debugPrint("Error saving local booking: $e");
+    }
   }
 
   static Future<List> getHistory(String mobile) async {
     final res = await http.get(
-      Uri.parse('$baseUrl/bookings_by_mobile?mobile=$mobile'),
+      Uri.parse('${Config.baseUrl}/bookings_by_mobile?mobile=$mobile'),
     );
-    return json.decode(res.body);
+    List<dynamic> history = json.decode(res.body);
+
+    // Sort descending by date
+    history.sort((a, b) {
+      final dateA = a['created_at'] ?? a['date'] ?? 0;
+      final dateB = b['created_at'] ?? b['date'] ?? 0;
+      return dateB.compareTo(dateA); 
+    });
+
+    // Merge with local data
+    try {
+      history = await _mergeWithLocalDetails(history);
+    } catch(e) {
+      debugPrint("Merge failed: $e");
+    }
+
+    return history;
+  }
+
+  static Future<List> _mergeWithLocalDetails(List history) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final localDataStr = prefs.getString('local_bookings_v1');
+      debugPrint("Local data string: $localDataStr");
+      
+      if (localDataStr == null) return history;
+      
+      final localData = Map<String, dynamic>.from(json.decode(localDataStr));
+      
+      for (var booking in history) {
+        final bId = booking['booking_id'];
+        if (localData.containsKey(bId)) {
+          final local = localData[bId];
+          debugPrint("Merging local data for $bId: $local");
+          // Update the booking map in place
+          // Note: 'history' contains Maps, but they might be restricted types if from json.decode directly without casting to Mutable.
+          // Usually json.decode returns standard Maps which are mutable.
+          booking['age'] = local['age'];
+          booking['gender'] = local['gender'];
+          booking['address'] = local['address'];
+        }
+      }
+    } catch (e) {
+      debugPrint("Error merging local data: $e");
+    }
+    return history;
   }
 
   static Future<void> updatePaymentDetails({
@@ -73,7 +154,7 @@ class ApiService {
     required String updatedByName,
   }) async {
     await http.post(
-      Uri.parse('$baseUrl/update_payment_details'),
+      Uri.parse('${Config.baseUrl}/update_payment_details'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         "booking_id": bookingId,
@@ -86,7 +167,7 @@ class ApiService {
   }
 
   static Future<List> getCenterStats({int? startTs, int? endTs}) async {
-    String url = '$baseUrl/admin/center_stats';
+    String url = '${Config.baseUrl}/admin/center_stats';
     if (startTs != null && endTs != null) {
       url += '?start_ts=$startTs&end_ts=$endTs';
     }
