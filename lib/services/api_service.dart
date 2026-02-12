@@ -79,18 +79,12 @@ class ApiService {
         'age': data['age'],
         'gender': data['gender'],
         'address': data['address'],
-        'mobile': data['mobile'] // Save mobile for redundancy
+        'mobile': data['mobile'] 
       };
       
-      debugPrint("Saving local booking: $bookingId -> ${localData[bookingId]}");
-      final saved = await prefs.setString('local_bookings_v1', json.encode(localData));
-      if (saved) {
-        debugPrint("Local booking saved successfully.");
-      } else {
-        debugPrint("FAILED to save local booking.");
-      }
+      await prefs.setString('local_bookings_v1', json.encode(localData));
     } catch (e) {
-      debugPrint("Error saving local booking: $e");
+      // ignore
     }
   }
 
@@ -111,7 +105,7 @@ class ApiService {
     try {
       history = await _mergeWithLocalDetails(history);
     } catch(e) {
-      debugPrint("Merge failed: $e");
+      // ignore
     }
 
     return history;
@@ -121,7 +115,6 @@ class ApiService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final localDataStr = prefs.getString('local_bookings_v1');
-      debugPrint("Local data string: $localDataStr");
       
       if (localDataStr == null) return history;
       
@@ -131,17 +124,14 @@ class ApiService {
         final bId = booking['booking_id'];
         if (localData.containsKey(bId)) {
           final local = localData[bId];
-          debugPrint("Merging local data for $bId: $local");
           // Update the booking map in place
-          // Note: 'history' contains Maps, but they might be restricted types if from json.decode directly without casting to Mutable.
-          // Usually json.decode returns standard Maps which are mutable.
-          booking['age'] = local['age'];
-          booking['gender'] = local['gender'];
-          booking['address'] = local['address'];
+          booking['age'] = booking['age'] ?? local['age'];
+          booking['gender'] = booking['gender'] ?? local['gender'];
+          booking['address'] = booking['address'] ?? local['address'];
         }
       }
     } catch (e) {
-      debugPrint("Error merging local data: $e");
+      // ignore
     }
     return history;
   }

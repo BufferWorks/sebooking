@@ -120,6 +120,7 @@ def add_booking(data: dict):
         "payment_status": data.get("payment_status", "Unpaid")
     }
 
+    print(f"DEBUG: Adding booking with details: {booking}")
     bookings_col.insert_one(booking)
 
     return {"booking_id": booking_id}
