@@ -51,12 +51,16 @@ class ApiService {
       "payment_status": paymentStatus,
       "paid_amount": paidAmount,
     };
+    
+    debugPrint("DEBUG: Sending booking request: $body");
 
     final res = await http.post(
       Uri.parse('${Config.baseUrl}/add_booking'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(body),
     );
+    
+    debugPrint("DEBUG: Booking response: ${res.body}");
 
     final bookingId = json.decode(res.body)["booking_id"];
     

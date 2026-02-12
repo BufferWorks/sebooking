@@ -122,8 +122,13 @@ def add_booking(data: dict):
 
     print(f"DEBUG: Adding booking with details: {booking}")
     bookings_col.insert_one(booking)
+    
+    # Remove _id for response
+    response_data = booking.copy()
+    if "_id" in response_data:
+        del response_data["_id"]
 
-    return {"booking_id": booking_id}
+    return {"booking_id": booking_id, "saved_data": response_data}
 
 # ---------------- BOOKING HISTORY (NEW) ----------------
 @app.get("/bookings_by_mobile")
