@@ -505,3 +505,45 @@ def update_payment(data: dict):
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Booking not found")
     return {"status": "updated"}
+
+# ================= UPDATE PAYMENT COLLECTION DETAILS (ADMIN & OTHERS) =================
+@app.post("/update_payment_details")
+def update_payment_details(data: dict):
+    booking_id = data.get("booking_id")
+    agent_coll = float(data.get("agent_collected", 0))
+    center_coll = float(data.get("center_collected", 0))
+    admin_coll = float(data.get("admin_collected", 0))
+    updated_by = data.get("updated_by_name", "System")
+
+    # Get current booking for price check
+    booking = bookings_col.find_one({"booking_id": booking_id})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    price = float(booking.get("price", 0))
+    
+    # Calculate Total Paid
+    total_paid = agent_coll + center_coll + admin_coll
+    
+    # Determine Status
+    new_status = "Unpaid"
+    # If explicitly setting status via logic or relying on amount
+    if total_paid >= price:
+        new_status = "Paid"
+    elif total_paid > 0:
+        new_status = f"Partially Paid ({int(total_paid)}/{int(price)})"
+    else:
+        new_status = "Unpaid"
+
+    result = bookings_col.update_one(
+        {"booking_id": booking_id},
+        {"$set": {
+            "agent_collected": agent_coll,
+            "center_collected": center_coll,
+            "admin_collected": admin_coll,
+            "last_payment_update_by": updated_by,
+            "payment_status": new_status
+        }}
+    )
+    
+    return {"status": "updated", "payment_status": new_status, "total_paid": total_paid}
