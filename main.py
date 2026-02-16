@@ -439,12 +439,19 @@ def admin_all_bookings():
             "booking_id": b["booking_id"],
             "patient_name": b["patient_name"],
             "mobile": b["mobile"],
+            "age": b.get("age"),
+            "gender": b.get("gender"),
+            "address": b.get("address"),
             "test_name": test["test_name"] if test else "",
             "center_name": center["center_name"] if center else "",
+            "price": b.get("price", 0),
             "status": b["status"],
             "created_at": b["created_at"],
             "booked_by": b.get("booked_by", "Customer"),
-            "payment_status": b.get("payment_status", "Unpaid")
+            "payment_status": b.get("payment_status", "Unpaid"),
+            "agent_collected": b.get("agent_collected", 0),
+            "center_collected": b.get("center_collected", 0),
+            "admin_collected": b.get("admin_collected", 0)
         })
 
     return result
